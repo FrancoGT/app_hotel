@@ -28,14 +28,18 @@ export default function RegisterPage() {
     setLoading(true)
     setError("")
     try {
-      await registerUser(form)
-      router.push("/login") // Redirige al login si todo sale bien
+      await registerUser({
+        ...form,
+        password: form.pass, // ✅ mapeo correcto
+      })
+      router.push("/login")
     } catch (err: any) {
       setError(err.message || "Error inesperado")
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <div className="max-w-md mx-auto mt-16 p-6 border border-gray-300 rounded-lg shadow-md">
