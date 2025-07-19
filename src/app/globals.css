@@ -1,0 +1,180 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Variables CSS personalizadas */
+:root {
+  --illary-primary: #9f836a;
+  --illary-primary-dark: #8a7158;
+  --illary-primary-light: #b8a08a;
+  --illary-background: #fdfaf7;
+  --illary-text: #2c2c2c;
+  --illary-text-light: #5a5a5a;
+  --illary-border: #e8e0d6;
+}
+
+/* Fondo global y tipografía */
+body {
+  background-color: var(--illary-background);
+  color: var(--illary-text);
+  font-family: "Playfair Display", serif;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Encabezados */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--illary-primary);
+  font-family: "Playfair Display", serif;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+}
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+h3 {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+/* Enlaces */
+a {
+  color: var(--illary-primary);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+a:hover {
+  color: var(--illary-primary-dark);
+  text-decoration: underline;
+}
+
+/* --- BOTONES PERSONALIZADOS --- */
+
+/* Estilo global para botones manuales, sin interferir con ShadCN */
+.btn-illary {
+  border: 2px solid var(--illary-primary);
+  color: var(--illary-primary);
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  font-family: "Playfair Display", serif;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.btn-illary:hover {
+  background-color: var(--illary-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(159, 131, 106, 0.3);
+}
+
+.btn-illary:active {
+  transform: translateY(0);
+}
+
+.btn-primary-illary {
+  background-color: var(--illary-primary);
+  color: white;
+}
+.btn-primary-illary:hover {
+  background-color: var(--illary-primary-dark);
+  color: white;
+}
+
+/* Estilo para tarjetas */
+.card {
+  background: white;
+  border: 1px solid var(--illary-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(159, 131, 106, 0.15);
+  border-color: var(--illary-primary-light);
+}
+
+/* Texto de precios */
+.price {
+  color: #059669;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+/* Animación fade-in */
+.fade-in {
+  animation: fadeIn 0.6s ease-in;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo en header */
+.header-logo {
+  transition: all 0.3s ease;
+}
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Sombras suaves */
+.soft-shadow {
+  box-shadow: 0 2px 15px rgba(159, 131, 106, 0.1);
+}
+
+/* Línea decorativa bajo títulos */
+.decorative-border {
+  position: relative;
+}
+.decorative-border::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--illary-primary), transparent);
+}
+
+/* Texto responsive */
+.responsive-text {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+}
+
+/* Mobile tuning */
+@media (max-width: 768px) {
+  body {
+    font-size: 0.9rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .btn-illary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+  }
+}
