@@ -155,7 +155,7 @@ export default function Header() {
                       className="w-48 bg-white shadow-md border border-[#e8e0d6] rounded-md z-50"
                     >
                       <DropdownMenuItem asChild>
-                        <Link href="/habitaciones">Habitaciones</Link>
+                        <Link href="/">Habitaciones</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/reservas">Reservas</Link>

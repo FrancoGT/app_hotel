@@ -1,12 +1,9 @@
 "use client"
-
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { fetchRooms, createReservation } from "@/lib/fetcher"
 import { useAuth } from "@/context/AuthContext"
 
-// Definición del tipo de habitación
 type Room = {
   id: number
   roomNumber: string
@@ -18,10 +15,21 @@ type Room = {
   features: string[]
 }
 
+type NotificationState = {
+  show: boolean
+  type: "success" | "error"
+  message: string
+}
+
 export default function RoomList() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
+  const [notification, setNotification] = useState<NotificationState>({
+    show: false,
+    type: "success",
+    message: "",
+  })
   const [formData, setFormData] = useState({
     checkInDate: "",
     checkOutDate: "",
@@ -44,6 +52,24 @@ export default function RoomList() {
     }
     getRooms()
   }, [])
+
+  // Auto-hide notification after 5 seconds
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification((prev) => ({ ...prev, show: false }))
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [notification.show])
+
+  const showNotification = (type: "success" | "error", message: string) => {
+    setNotification({
+      show: true,
+      type,
+      message,
+    })
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -88,11 +114,27 @@ export default function RoomList() {
         totalAmount: totalAmount,
         aiNotes: "Solicitud generada desde la plataforma",
       })
-      alert("Reserva creada exitosamente")
+
+      showNotification(
+        "success",
+        `¡Excelente! Tu reserva para la habitación ${selectedRoom.roomNumber} ha sido confirmada exitosamente.`,
+      )
       setSelectedRoom(null)
+
+      // Reset form
+      setFormData({
+        checkInDate: "",
+        checkOutDate: "",
+        adults: 1,
+        children: 0,
+        specialRequests: "",
+      })
     } catch (err) {
       console.error(err)
-      alert("Error al crear la reserva")
+      showNotification(
+        "error",
+        "Lo sentimos, hubo un problema al procesar tu reserva. Por favor, inténtalo nuevamente.",
+      )
     }
   }
 
@@ -100,6 +142,61 @@ export default function RoomList() {
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
+      {/* Notification */}
+      {notification.show && (
+        <div
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] w-full max-w-md mx-4 transition-all duration-500 ease-in-out ${
+            notification.show ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          }`}
+        >
+          <div
+            className={`${
+              notification.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            } border-2 p-4 rounded-xl shadow-lg backdrop-blur-sm`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    notification.type === "success" ? "bg-green-100" : "bg-red-100"
+                  }`}
+                >
+                  {notification.type === "success" ? (
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">
+                    {notification.type === "success" ? "¡Reserva Confirmada!" : "Error en la Reserva"}
+                  </p>
+                  <p className="text-sm opacity-90">{notification.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotification((prev) => ({ ...prev, show: false }))}
+                className={`ml-4 ${
+                  notification.type === "success"
+                    ? "text-green-600 hover:text-green-800"
+                    : "text-red-600 hover:text-red-800"
+                } transition-colors`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isLoggedIn && user ? (
         <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-md mb-6 shadow-sm text-center">
           <p className="text-lg font-medium">
@@ -125,26 +222,20 @@ export default function RoomList() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
         {rooms.map((room) => (
-          <div
-            key={room.id}
-            className="rounded-2xl shadow-md border border-gray-200 p-6 bg-white hover:shadow-lg transition"
-          >
-            <h2 className="text-xl font-semibold text-blue-600 mb-1">Habitación {room.roomNumber}</h2>
-            <p className="text-gray-500 text-sm mb-2">{room.description}</p>
-            <p className="text-sm text-gray-700">Piso: {room.floor}</p>
-            <p className="text-sm text-gray-700">Ocupación máxima: {room.maxOccupancy} personas</p>
-            <p className="text-sm text-gray-700 mb-2">Estado: {room.status}</p>
-            <p className="text-lg font-bold text-green-600">S/ {room.pricePerNight} por noche</p>
-            <ul className="mt-4 list-disc list-inside text-sm text-gray-600">
+          <div key={room.id} className="card">
+            <h2 className="text-2xl font-bold mb-2">Habitación {room.roomNumber}</h2>
+            <p className="text-sm text-[var(--illary-text-light)] mb-2">{room.description}</p>
+            <p className="text-sm">Piso: {room.floor}</p>
+            <p className="text-sm">Ocupación máxima: {room.maxOccupancy} personas</p>
+            <p className="text-sm mb-2">Estado: {room.status}</p>
+            <p className="price">S/ {room.pricePerNight} por noche</p>
+            <ul className="mt-4 list-disc list-inside text-sm text-[var(--illary-text-light)]">
               {room.features.map((feature, idx) => (
                 <li key={idx}>{feature}</li>
               ))}
             </ul>
             {isLoggedIn ? (
-              <button
-                className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
-                onClick={() => handleReserve(room)}
-              >
+              <button className="btn-illary mt-4 w-full" onClick={() => handleReserve(room)}>
                 Reservar
               </button>
             ) : null}
@@ -155,7 +246,6 @@ export default function RoomList() {
       {selectedRoom && (
         <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Header del modal */}
             <div className="border-b border-gray-200 p-6 relative">
               <button
                 type="button"
@@ -185,8 +275,6 @@ export default function RoomList() {
                 </div>
               </div>
             </div>
-
-            {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -236,7 +324,6 @@ export default function RoomList() {
                   />
                 </div>
               </div>
-
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Solicitudes especiales</label>
                 <textarea
@@ -248,8 +335,6 @@ export default function RoomList() {
                   className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Resumen de precio */}
               {formData.checkInDate && formData.checkOutDate && (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                   <h4 className="font-semibold text-gray-900 mb-2">Resumen de la reserva</h4>
@@ -284,8 +369,6 @@ export default function RoomList() {
                   </div>
                 </div>
               )}
-
-              {/* Botones */}
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -294,10 +377,7 @@ export default function RoomList() {
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition"
-                >
+                <button type="submit" className="flex-1 btn-illary">
                   Confirmar Reserva
                 </button>
               </div>

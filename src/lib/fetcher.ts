@@ -11,18 +11,30 @@ export async function fetchRooms() {
 
 // REGISTRO DE USUARIO
 export async function registerUser(userData: {
-  displayName: string
+  first_name: string
+  last_name: string
+  id_document_type: 'DNI' | 'CE'
+  id_document_number: string
   login: string
-  password: string // ← CORREGIDO aquí
+  password: string
   telephone: string
+  position?: string
   username: string
+  displayName: string // ← ¡ESTA LÍNEA ES CLAVE!
 }) {
+  const { password, ...rest } = userData
+
+  const payload = {
+    ...rest,
+    pass: password, // backend espera 'pass'
+  }
+
   const res = await fetch(`${API_BASE_URL}/users/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(userData),
+    body: JSON.stringify(payload),
   })
 
   if (!res.ok) {
