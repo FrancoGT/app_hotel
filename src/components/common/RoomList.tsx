@@ -1,8 +1,10 @@
 "use client"
+
 import type React from "react"
 import { useEffect, useState } from "react"
 import { fetchRooms, createReservation } from "@/lib/fetcher"
 import { useAuth } from "@/context/AuthContext"
+import { parseServerError } from "@/lib/error-parser" // Importar el parser de errores
 
 type Room = {
   id: number
@@ -30,6 +32,7 @@ export default function RoomList() {
     type: "success",
     message: "",
   })
+  const [showMessageBanner, setShowMessageBanner] = useState(true)
   const [formData, setFormData] = useState({
     checkInDate: "",
     checkOutDate: "",
@@ -37,6 +40,10 @@ export default function RoomList() {
     children: 0,
     specialRequests: "",
   })
+  // Nuevos estados para manejar errores de validación
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [generalError, setGeneralError] = useState<string | null>(null)
+
   const { user, isLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -63,6 +70,24 @@ export default function RoomList() {
     }
   }, [notification.show])
 
+  // Auto-hide welcome/login message after 5 seconds
+  useEffect(() => {
+    if (showMessageBanner) {
+      const timer = setTimeout(() => {
+        setShowMessageBanner(false)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [showMessageBanner])
+
+  // Limpiar errores cuando se selecciona una nueva habitación (se abre el modal)
+  useEffect(() => {
+    if (selectedRoom) {
+      setFieldErrors({})
+      setGeneralError(null)
+    }
+  }, [selectedRoom])
+
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({
       show: true,
@@ -74,6 +99,18 @@ export default function RoomList() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
+    // Limpiar el error específico del campo cuando el usuario empieza a escribir
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[name]
+        return newErrors
+      })
+    }
+    // Limpiar el error general si se modifica un campo de fecha y el error general era de fechas
+    if ((name === "checkInDate" || name === "checkOutDate") && generalError?.includes("fecha de Check-Out")) {
+      setGeneralError(null)
+    }
   }
 
   const handleReserve = (room: Room) => {
@@ -101,6 +138,10 @@ export default function RoomList() {
     const token = localStorage.getItem("access_token")
     if (!token || !user || !selectedRoom) return
 
+    // Limpiar errores antes de un nuevo intento de envío
+    setFieldErrors({})
+    setGeneralError(null)
+
     const totalAmount = calculateTotalAmount(selectedRoom.pricePerNight, formData.checkInDate, formData.checkOutDate)
 
     try {
@@ -114,13 +155,11 @@ export default function RoomList() {
         totalAmount: totalAmount,
         aiNotes: "Solicitud generada desde la plataforma",
       })
-
       showNotification(
         "success",
         `¡Excelente! Tu reserva para la habitación ${selectedRoom.roomNumber} ha sido confirmada exitosamente.`,
       )
       setSelectedRoom(null)
-
       // Reset form
       setFormData({
         checkInDate: "",
@@ -131,17 +170,29 @@ export default function RoomList() {
       })
     } catch (err) {
       console.error(err)
-      showNotification(
-        "error",
-        "Lo sentimos, hubo un problema al procesar tu reserva. Por favor, inténtalo nuevamente.",
-      )
+      const parsedError = parseServerError(err)
+
+      setFieldErrors(parsedError.fieldErrors || {})
+      setGeneralError(parsedError.generalError || null)
+
+      if (parsedError.generalError) {
+        showNotification("error", parsedError.generalError)
+      } else if (parsedError.fieldErrors && Object.keys(parsedError.fieldErrors).length > 0) {
+        // Si hay errores de campo pero no un error general, muestra un mensaje genérico
+        showNotification("error", "Por favor, corrige los errores en el formulario.")
+      } else {
+        showNotification(
+          "error",
+          "Lo sentimos, hubo un problema al procesar tu reserva. Por favor, inténtalo nuevamente.",
+        )
+      }
     }
   }
 
   if (loading) return <p className="text-center text-gray-500">Cargando...</p>
 
   return (
-    <div className="container mx-auto px-4 py-8 relative">
+    <div className="container mx-auto px-4 py-4 relative max-w-6xl">
       {/* Notification */}
       {notification.show && (
         <div
@@ -196,30 +247,34 @@ export default function RoomList() {
           </div>
         </div>
       )}
-
-      {isLoggedIn && user ? (
-        <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-md mb-6 shadow-sm text-center">
-          <p className="text-lg font-medium">
-            ¡Bienvenido(a), <span className="font-bold">{user.name}</span>!
-          </p>
-        </div>
-      ) : (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-md mb-6 shadow-sm text-center">
-          <p>
-            ¡Hola! Para solicitar alguna reserva debes <strong>iniciar sesión</strong> o <strong>registrarte</strong>.
-          </p>
+      {/* Welcome/Login Message (Floating) */}
+      {showMessageBanner && (
+        <div
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-[55] w-full max-w-md mx-4 transition-all duration-500 ease-in-out ${
+            showMessageBanner ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          }`}
+        >
+          {isLoggedIn && user ? (
+            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-xl shadow-lg backdrop-blur-sm text-center">
+              <p className="text-lg font-medium">
+                ¡Bienvenido(a), <span className="font-bold">{user.name}</span>!
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl shadow-lg backdrop-blur-sm text-center">
+              <p>
+                ¡Hola! Para solicitar alguna reserva debes <strong>iniciar sesión</strong> o{" "}
+                <strong>registrarte</strong>.
+              </p>
+            </div>
+          )}
         </div>
       )}
-
-      <div className="text-center mb-10">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
-          Nuestras Habitaciones Exclusivas
+      <div className="text-center mb-2 mt-2">
+        <h1 className="text-lg md:text-xl font-semibold text-gray-800 tracking-tight mb-1 leading-snug">
+          Nuestras Habitaciones
         </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Descubre el confort y la elegancia en cada rincón. Encuentra la habitación perfecta para tu estancia.
-        </p>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
         {rooms.map((room) => (
           <div key={room.id} className="card">
@@ -242,7 +297,6 @@ export default function RoomList() {
           </div>
         ))}
       </div>
-
       {selectedRoom && (
         <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -276,64 +330,105 @@ export default function RoomList() {
               </div>
             </div>
             <form onSubmit={handleSubmit} className="p-6">
+              {generalError && (
+                <div
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                  role="alert"
+                >
+                  <strong className="font-bold">¡Error!</strong>
+                  <span className="block sm:inline"> {generalError}</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de entrada</label>
+                  <label htmlFor="checkInDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de entrada
+                  </label>
                   <input
                     type="date"
+                    id="checkInDate"
                     name="checkInDate"
                     value={formData.checkInDate}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      fieldErrors.checkInDate ? "border-red-500" : "border-gray-300"
+                    }`}
                     required
                   />
+                  {fieldErrors.checkInDate && <p className="text-red-500 text-xs mt-1">{fieldErrors.checkInDate}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de salida</label>
+                  <label htmlFor="checkOutDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de salida
+                  </label>
                   <input
                     type="date"
+                    id="checkOutDate"
                     name="checkOutDate"
                     value={formData.checkOutDate}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      fieldErrors.checkOutDate ? "border-red-500" : "border-gray-300"
+                    }`}
                     required
                   />
+                  {fieldErrors.checkOutDate && <p className="text-red-500 text-xs mt-1">{fieldErrors.checkOutDate}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Adultos</label>
+                  <label htmlFor="adults" className="block text-sm font-medium text-gray-700 mb-2">
+                    Adultos
+                  </label>
                   <input
                     type="number"
+                    id="adults"
                     name="adults"
                     min={1}
                     max={selectedRoom.maxOccupancy}
                     value={formData.adults}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      fieldErrors.adults ? "border-red-500" : "border-gray-300"
+                    }`}
                     required
                   />
+                  {fieldErrors.adults && <p className="text-red-500 text-xs mt-1">{fieldErrors.adults}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Niños</label>
+                  <label htmlFor="children" className="block text-sm font-medium text-gray-700 mb-2">
+                    Niños
+                  </label>
                   <input
                     type="number"
+                    id="children"
                     name="children"
                     min={0}
                     value={formData.children}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      fieldErrors.children ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {fieldErrors.children && <p className="text-red-500 text-xs mt-1">{fieldErrors.children}</p>}
                 </div>
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Solicitudes especiales</label>
+                <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 mb-2">
+                  Solicitudes especiales
+                </label>
                 <textarea
+                  id="specialRequests"
                   name="specialRequests"
                   value={formData.specialRequests}
                   onChange={handleInputChange}
                   placeholder="Describe cualquier solicitud especial que tengas..."
                   rows={3}
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    fieldErrors.specialRequests ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {fieldErrors.specialRequests && (
+                  <p className="text-red-500 text-xs mt-1">{fieldErrors.specialRequests}</p>
+                )}
               </div>
               {formData.checkInDate && formData.checkOutDate && (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">

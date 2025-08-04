@@ -78,8 +78,8 @@ export default function Header() {
             <Link href="/" className="text-sm font-medium text-[#9F836A] font-serif hover:underline">
               Habitaciones
             </Link>
-            <Link href="/reservas" className="text-sm font-medium text-[#9F836A] font-serif hover:underline">
-              Reservas
+            <Link href="/nosotros" className="text-sm font-medium text-[#9F836A] font-serif hover:underline">
+              Nosotros
             </Link>
           </nav>
 
@@ -158,7 +158,7 @@ export default function Header() {
                         <Link href="/">Habitaciones</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/reservas">Reservas</Link>
+                        <Link href="/nosotros">Nosotros</Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>

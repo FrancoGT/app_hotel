@@ -13,17 +13,16 @@ export async function fetchRooms() {
 export async function registerUser(userData: {
   first_name: string
   last_name: string
-  id_document_type: 'DNI' | 'CE'
+  id_document_type: "DNI" | "CE"
   id_document_number: string
   login: string
   password: string
   telephone: string
   position?: string
   username: string
-  displayName: string // ← ¡ESTA LÍNEA ES CLAVE!
+  displayName: string // Nombre completo del usuario
 }) {
   const { password, ...rest } = userData
-
   const payload = {
     ...rest,
     pass: password, // backend espera 'pass'
@@ -58,7 +57,13 @@ export async function loginUser(credentials: {
 
   if (!res.ok) {
     const errorText = await res.text()
-    throw new Error(`Error al iniciar sesión: ${errorText}`)
+    // Intentar parsear como JSON, si no es posible, lanzar el texto tal como está
+    try {
+      const errorJson = JSON.parse(errorText)
+      throw errorJson // Lanzar el objeto directamente
+    } catch {
+      throw new Error(errorText) // Si no es JSON válido, lanzar como Error
+    }
   }
 
   return res.json() // { access_token, token_type, user }
