@@ -25,38 +25,28 @@ export default function Header() {
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem("access_token")
-      if (token) {
-        try {
-          const userResp = await fetchCurrentUser(token)
+      if (!token) return
 
-          if (userResp.data) 
+      try {
+        // fetchCurrentUser devuelve objeto PLANO (CurrentUser), no { data: ... }
+        const me = await fetchCurrentUser(token)
+
+        login(
           {
-            login(
-              {
-                name: userResp.data.displayName,
-                email: userResp.data.login,
-                avatar: "/placeholder.svg?height=32&width=32",
-              },
-              token
-            )
-          } 
-          else 
-          {
-            console.error("No se pudo obtener el usuario:", userResp.error)
-            logout()
-          
-          }
-        } 
-        catch (error) 
-        {
-          console.error("Error al cargar usuario:", error)
-          logout()
-        }
+            name: me.displayName ?? "Usuario",
+            email: me.login,
+            avatar: "/placeholder.svg?height=32&width=32",
+          },
+          token
+        )
+      } catch (error) {
+        console.error("Error al cargar usuario:", error)
+        logout()
       }
     }
+
     loadUser()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [login, logout])
 
   const handleLogout = async () => {
     try {
