@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Menu, User, LogOut, Settings } from "lucide-react"
+import { Menu, User, LogOut, Settings, CalendarCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -27,22 +27,35 @@ export default function Header() {
       const token = localStorage.getItem("access_token")
       if (token) {
         try {
-          const userData = await fetchCurrentUser(token)
-          login(
-            {
-              name: userData.displayName,
-              email: userData.login,
-              avatar: "/placeholder.svg?height=32&width=32",
-            },
-            token
-          )
-        } catch (error) {
+          const userResp = await fetchCurrentUser(token)
+
+          if (userResp.data) 
+          {
+            login(
+              {
+                name: userResp.data.displayName,
+                email: userResp.data.login,
+                avatar: "/placeholder.svg?height=32&width=32",
+              },
+              token
+            )
+          } 
+          else 
+          {
+            console.error("No se pudo obtener el usuario:", userResp.error)
+            logout()
+          
+          }
+        } 
+        catch (error) 
+        {
           console.error("Error al cargar usuario:", error)
           logout()
         }
       }
     }
     loadUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleLogout = async () => {
@@ -81,6 +94,13 @@ export default function Header() {
             <Link href="/nosotros" className="text-sm font-medium text-[#9F836A] font-serif hover:underline">
               Nosotros
             </Link>
+
+            {/* NEW: Mis reservas solo para usuarios logueados (navbar desktop) */}
+            {isLoggedIn && user && (
+              <Link href="/mis-reservas" className="text-sm font-medium text-[#9F836A] font-serif hover:underline">
+                Mis reservas
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -105,6 +125,15 @@ export default function Header() {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+
+                  {/* NEW: Mis reservas en el dropdown del avatar (desktop y mobile) */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/mis-reservas">
+                      <CalendarCheck className="mr-2 h-4 w-4" />
+                      <span>Mis reservas</span>
+                    </Link>
+                  </DropdownMenuItem>
+
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
                     <span>Perfil</span>

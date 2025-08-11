@@ -26,108 +26,94 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-  // Validaciones específicas por campo (actualizadas para coincidir con el servidor)
-  const validateField = (name: string, value: string): string | undefined => {
+  // 1) Tipar el validador por clave conocida
+  const validateField = (name: keyof FormData, value: string): string | undefined => {
     switch (name) {
       case "login":
         if (!value.trim()) return "El correo electrónico es requerido"
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return "Ingresa un correo electrónico válido"
-        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ingresa un correo electrónico válido"
         return undefined
-
       case "password":
         if (!value) return "La contraseña es requerida"
         if (value.length < 8) return "La contraseña debe tener al menos 8 caracteres"
         return undefined
-
       default:
         return undefined
     }
   }
 
+
+  // 2) handleChange con clave tipada
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    const key = name as keyof FormData
+    setForm((prev) => ({ ...prev, [key]: value }))
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
-    if (fieldErrors[name as keyof FieldErrors]) {
-      setFieldErrors((prev) => ({ ...prev, [name]: undefined }))
-    }
-
-    // Limpiar error general también
-    if (error) {
-      setError("")
-    }
+    if (fieldErrors[key]) setFieldErrors((prev) => ({ ...prev, [key]: undefined }))
+    if (error) setError("")
   }
 
+
+  // 3) handleBlur con clave tipada
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    const fieldError = validateField(name, value)
-    if (fieldError) {
-      setFieldErrors((prev) => ({ ...prev, [name]: fieldError }))
-    }
+    const key = name as keyof FormData
+    const fieldError = validateField(key, value)
+    if (fieldError) setFieldErrors((prev) => ({ ...prev, [key]: fieldError }))
   }
 
+
+  // 4) validateForm sin Object.keys (evita el cast)
   const validateForm = (): boolean => {
     const errors: FieldErrors = {}
     let isValid = true
 
-    // Validar todos los campos
-    Object.keys(form).forEach((key) => {
-      const error = validateField(key, form[key as keyof FormData])
-      if (error) {
-        errors[key as keyof FieldErrors] = error
+    const KEYS: (keyof FormData)[] = ["login", "password"]
+    for (const key of KEYS) {
+      const val = (key === "login" ? form[key].trim() : form[key]) // normaliza login
+      const err = validateField(key, val)
+      if (err) {
+        errors[key] = err
         isValid = false
       }
-    })
+    }
 
     setFieldErrors(errors)
     return isValid
   }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setFieldErrors({})
 
-    // Validar formulario completo
     if (!validateForm()) {
       setError("Por favor, corrige los errores en el formulario")
       return
     }
 
     setLoading(true)
-
     try {
+      // loginUser devuelve PLANO: { access_token, token_type, user: { displayName, login, ... } }
       const response = await loginUser(form)
 
-      // Usar tu estructura de AuthContext
       login(
         {
           name: response.user.displayName || "Usuario",
           email: response.user.login || form.login,
           avatar: "/placeholder.svg?height=32&width=32",
         },
-        response.access_token,
+        response.access_token
       )
 
       router.push("/")
     } catch (err: any) {
-      console.error("Login error:", err)
-
-      // Usar el parser de errores para manejar errores del servidor
       const { generalError, fieldErrors: serverFieldErrors } = parseServerError(err)
-
       if (serverFieldErrors && Object.keys(serverFieldErrors).length > 0) {
         setFieldErrors(serverFieldErrors)
       }
-
-      if (generalError) {
-        setError(generalError)
-      } else if (!serverFieldErrors || Object.keys(serverFieldErrors).length === 0) {
-        setError("Error al iniciar sesión. Intenta nuevamente")
-      }
+      setError(generalError || err?.message || "Error al iniciar sesión. Intenta nuevamente")
     } finally {
       setLoading(false)
     }
@@ -136,13 +122,9 @@ export default function LoginPage() {
   const getFieldClassName = (fieldName: keyof FieldErrors) => {
     const baseClass =
       "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
-    const hasError = fieldErrors[fieldName]
-
-    if (hasError) {
-      return `${baseClass} border-red-300 focus:ring-red-200 focus:border-red-500`
-    }
-
-    return `${baseClass} border-gray-300 focus:ring-[#9F836A] focus:border-[#9F836A]`
+    return fieldErrors[fieldName]
+      ? `${baseClass} border-red-300 focus:ring-red-200 focus:border-red-500`
+      : `${baseClass} border-gray-300 focus:ring-[#9F836A] focus:border-[#9F836A]`
   }
 
   return (
@@ -199,7 +181,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={loading || Object.keys(fieldErrors).some((key) => fieldErrors[key as keyof FieldErrors])}
+              disabled={loading || Object.values(fieldErrors).some(Boolean)}
               className="w-full bg-[#9F836A] hover:bg-[#8A7158] text-white py-3 px-4 font-serif text-base rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -210,19 +192,12 @@ export default function LoginPage() {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path
                       className="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                    />
                   </svg>
                   Ingresando...
                 </span>
@@ -246,20 +221,14 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <p className="text-sm text-gray-500">
             ¿No tienes una cuenta?{" "}
-            <button
-              onClick={() => router.push("/register")}
-              className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors"
-            >
+            <button onClick={() => router.push("/register")} className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors">
               Regístrate aquí
             </button>
           </p>
 
           <p className="text-sm text-gray-500">
             ¿Problemas para acceder?{" "}
-            <button
-              onClick={() => router.push("/support")}
-              className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors"
-            >
+            <button onClick={() => router.push("/support")} className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors">
               Contacta soporte
             </button>
           </p>

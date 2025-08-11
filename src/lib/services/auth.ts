@@ -1,35 +1,58 @@
+// src/lib/auth.ts
 import { API_BASE_URL } from "../api"
-import { handleResponse, withAuth } from "../client"
+import { withAuth } from "../client"
 import { LoginCredentials } from "../types/auth"
-import { ApiResponse } from "../types/reservation"
 
-export async function loginUser(credentials: LoginCredentials): Promise<ApiResponse<{
+export interface CurrentUser {
+  displayName: string
+  login: string
+  // agrega otros campos si tu API los envía (id, roles, etc.)
+}
+
+export interface LoginSuccess {
   access_token: string
   token_type: string
-  user: any
-}>> {
-  const response = await fetch(`${API_BASE_URL}/users/login`, {
+  user: CurrentUser
+}
+
+export async function loginUser(credentials: LoginCredentials): Promise<LoginSuccess> {
+  const res = await fetch(`${API_BASE_URL}/users/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(credentials),
+    cache: "no-store",
   })
-
-  return handleResponse(response)
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null)
+    const msg = (payload && (payload.detail || payload.message)) || `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return (await res.json()) as LoginSuccess
 }
 
-export async function logoutUser(token: string): Promise<ApiResponse<void>> {
-  const response = await fetch(`${API_BASE_URL}/users/logout`, {
+export async function fetchCurrentUser(token: string): Promise<CurrentUser> {
+  const res = await fetch(`${API_BASE_URL}/users/me`, {
+    method: "GET",
+    headers: withAuth({ Accept: "application/json" }, token),
+    cache: "no-store",
+  })
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null)
+    const msg = (payload && (payload.detail || payload.message)) || `HTTP ${res.status}`
+    throw new Error(msg)
+  }
+  return (await res.json()) as CurrentUser
+}
+
+export async function logoutUser(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/users/logout`, {
     method: "POST",
-    headers: withAuth({ "Content-Type": "application/json" }, token),
+    headers: withAuth({ "Content-Type": "application/json", Accept: "application/json" }, token),
+    cache: "no-store",
   })
-
-  return handleResponse(response)
-}
-
-export async function fetchCurrentUser(token: string): Promise<ApiResponse<any>> {
-  const response = await fetch(`${API_BASE_URL}/users/me`, {
-    headers: withAuth({}, token),
-  })
-
-  return handleResponse(response)
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null)
+    const msg = (payload && (payload.detail || payload.message)) || `HTTP ${res.status}`
+    throw new Error(msg)
+  }
 }

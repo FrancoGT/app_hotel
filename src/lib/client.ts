@@ -1,22 +1,41 @@
-export async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    let errorMessage = "Error en la solicitud"
-    try {
-      const errorData = await response.json()
-      errorMessage = errorData.message || JSON.stringify(errorData)
-    } catch {
-      errorMessage = await response.text()
-    }
-    throw new Error(errorMessage)
-  }
-
-  if (response.status === 204) {
-    return undefined as unknown as T
-  }
-
-  return response.json() as Promise<T>
+// Estructura de respuesta estándar
+export type ApiResponse<T> = {
+  data?: T
+  error?: { message: string; details?: any }
 }
 
-export function withAuth(headers: HeadersInit, token?: string): HeadersInit {
-  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers
+export async function handleResponse<T = any>(response: Response): Promise<ApiResponse<T>> {
+  let payload: any = null
+
+  // Intenta parsear JSON solo si corresponde
+  try {
+    const ct = response.headers.get("content-type") || ""
+    payload = ct.includes("application/json") ? await response.json() : null
+  } catch {
+    // sin body JSON
+  }
+
+  // 204 No Content
+  if (response.status === 204) return { data: undefined as unknown as T }
+
+  // Error HTTP
+  if (!response.ok) {
+    const message =
+      (payload && (payload.detail || payload.message)) ||
+      `HTTP ${response.status}`
+    return { error: { message, details: payload } }
+  }
+
+  // OK → retorna el body como data (tu backend ya devuelve el objeto directamente)
+  return { data: (payload ?? null) as T }
+}
+
+// Asegura Authorization y Accept; no fuerces Content-Type en GETs
+export function withAuth(headers: HeadersInit = {}, token?: string): HeadersInit {
+  const h: Record<string, string> =
+    headers instanceof Headers ? Object.fromEntries(headers.entries()) : { ...headers as Record<string, string> }
+
+  if (token) h.Authorization = `Bearer ${token}`
+  if (!h.Accept) h.Accept = "application/json"
+  return h
 }
