@@ -61,7 +61,7 @@ export default function RoomList() {
         errorMessage.includes("network") ||
         errorMessage.includes("failed to fetch")
       ) {
-        setError("No pudimos conectarnos al servidor. Por favor, verifica tu conexión a internet.")
+        setError("No pudimos conectarnos al servidor.")
       } else if (errorMessage.includes("500") || errorMessage.includes("internal server")) {
         setError("Lo sentimos, el servicio no se encuentra disponible en este momento.")
       } else if (errorMessage.includes("timeout")) {
