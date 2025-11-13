@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../api"
-import { Room } from "../types/room"
+import type { Room } from "../types/room"
 
 // Asegúrate de que ESTA función devuelva un array plano de rooms
 export async function fetchRooms(): Promise<Room[]> {

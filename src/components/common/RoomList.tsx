@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { fetchRooms, createReservation } from "@/lib/fetcher"
 import { useAuth } from "@/context/AuthContext"
-import { parseServerError } from "@/lib/error-parser" // Importar el parser de errores
+import { parseServerError } from "@/lib/error-parser"
 
 type Room = {
   id: number
@@ -26,6 +26,7 @@ type NotificationState = {
 export default function RoomList() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const [notification, setNotification] = useState<NotificationState>({
     show: false,
@@ -40,27 +41,43 @@ export default function RoomList() {
     children: 0,
     specialRequests: "",
   })
-  // Nuevos estados para manejar errores de validación
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [generalError, setGeneralError] = useState<string | null>(null)
 
   const { user, isLoggedIn } = useAuth()
 
-  useEffect(() => {
-    const getRooms = async () => {
-      try {
-        const data = await fetchRooms()
-        setRooms(data)
-      } catch (err) {
-        console.error("Error fetching rooms:", err)
-      } finally {
-        setLoading(false)
+  const getRooms = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await fetchRooms()
+      setRooms(data)
+    } catch (err) {
+      console.error("Error fetching rooms:", err)
+      const errorMessage = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
+
+      if (
+        errorMessage.includes("cors") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("failed to fetch")
+      ) {
+        setError("No pudimos conectarnos al servidor. Por favor, verifica tu conexión a internet.")
+      } else if (errorMessage.includes("500") || errorMessage.includes("internal server")) {
+        setError("Lo sentimos, el servicio no se encuentra disponible en este momento.")
+      } else if (errorMessage.includes("timeout")) {
+        setError("La solicitud ha tardado demasiado. Por favor, inténtalo nuevamente.")
+      } else {
+        setError("Lo sentimos, el servicio no se encuentra disponible en este momento.")
       }
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     getRooms()
   }, [])
 
-  // Auto-hide notification after 5 seconds
   useEffect(() => {
     if (notification.show) {
       const timer = setTimeout(() => {
@@ -70,7 +87,6 @@ export default function RoomList() {
     }
   }, [notification.show])
 
-  // Auto-hide welcome/login message after 5 seconds
   useEffect(() => {
     if (showMessageBanner) {
       const timer = setTimeout(() => {
@@ -80,7 +96,6 @@ export default function RoomList() {
     }
   }, [showMessageBanner])
 
-  // Limpiar errores cuando se selecciona una nueva habitación (se abre el modal)
   useEffect(() => {
     if (selectedRoom) {
       setFieldErrors({})
@@ -99,7 +114,6 @@ export default function RoomList() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
-    // Limpiar el error específico del campo cuando el usuario empieza a escribir
     if (fieldErrors[name]) {
       setFieldErrors((prev) => {
         const newErrors = { ...prev }
@@ -107,7 +121,6 @@ export default function RoomList() {
         return newErrors
       })
     }
-    // Limpiar el error general si se modifica un campo de fecha y el error general era de fechas
     if ((name === "checkInDate" || name === "checkOutDate") && generalError?.includes("fecha de Check-Out")) {
       setGeneralError(null)
     }
@@ -138,7 +151,6 @@ export default function RoomList() {
     const token = localStorage.getItem("access_token")
     if (!token || !user || !selectedRoom) return
 
-    // Limpiar errores antes de un nuevo intento de envío
     setFieldErrors({})
     setGeneralError(null)
 
@@ -160,7 +172,6 @@ export default function RoomList() {
         `¡Excelente! Tu reserva para la habitación ${selectedRoom.roomNumber} ha sido confirmada exitosamente.`,
       )
       setSelectedRoom(null)
-      // Reset form
       setFormData({
         checkInDate: "",
         checkOutDate: "",
@@ -178,7 +189,6 @@ export default function RoomList() {
       if (parsedError.generalError) {
         showNotification("error", parsedError.generalError)
       } else if (parsedError.fieldErrors && Object.keys(parsedError.fieldErrors).length > 0) {
-        // Si hay errores de campo pero no un error general, muestra un mensaje genérico
         showNotification("error", "Por favor, corrige los errores en el formulario.")
       } else {
         showNotification(
@@ -189,7 +199,54 @@ export default function RoomList() {
     }
   }
 
-  if (loading) return <p className="text-center text-gray-500">Cargando...</p>
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--illary-primary)]"></div>
+          <p className="mt-4 text-gray-600 font-medium">Cargando habitaciones...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">
+          <div className="mb-6">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Servicio no disponible</h2>
+          <p className="text-gray-600 mb-6 leading-relaxed">{error}</p>
+          <button
+            onClick={getRooms}
+            className="bg-[var(--illary-primary)] hover:bg-[var(--illary-primary-dark)] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Intentar nuevamente
+          </button>
+          <p className="mt-6 text-sm text-gray-500">Si el problema persiste, por favor contacta a soporte.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-4 relative max-w-6xl">
@@ -247,7 +304,7 @@ export default function RoomList() {
           </div>
         </div>
       )}
-      {/* Welcome/Login Message (Floating) */}
+      {/* Welcome/Login Message */}
       {showMessageBanner && (
         <div
           className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-[55] w-full max-w-md mx-4 transition-all duration-500 ease-in-out ${
