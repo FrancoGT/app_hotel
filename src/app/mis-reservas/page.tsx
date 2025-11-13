@@ -64,7 +64,7 @@ export default function MisReservasPage() {
         // Carga reservas y rooms en paralelo
         const [resvsRaw, roomsRaw] = await Promise.all([
           fetchMyReservations(token), // puede ser [] o {data:[]}
-          fetchRooms(),               // puede ser [] o {data:[]}
+          fetchRooms(), // puede ser [] o {data:[]}
         ])
 
         const resvs = toArray<Reservation>(resvsRaw)
@@ -94,12 +94,12 @@ export default function MisReservasPage() {
 
   if (loading) {
     return (
-      <main className="container mx-auto px-4 md:px-6 py-8">
-        <h1 className="text-3xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <h1 className="text-2xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
         <div className="space-y-4">
-          <div className="h-24 rounded-xl border animate-pulse" />
-          <div className="h-24 rounded-xl border animate-pulse" />
-          <div className="h-24 rounded-xl border animate-pulse" />
+          <div className="h-24 rounded-lg border animate-pulse" />
+          <div className="h-24 rounded-lg border animate-pulse" />
+          <div className="h-24 rounded-lg border animate-pulse" />
         </div>
       </main>
     )
@@ -107,9 +107,9 @@ export default function MisReservasPage() {
 
   if (error) {
     return (
-      <main className="container mx-auto px-4 md:px-6 py-8">
-        <h1 className="text-3xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
-        <div className="rounded-xl border p-6">
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <h1 className="text-2xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
+        <div className="card">
           <p className="text-red-600 mb-4">{error}</p>
           <Button onClick={() => router.refresh()}>Reintentar</Button>
         </div>
@@ -118,21 +118,21 @@ export default function MisReservasPage() {
   }
 
   return (
-    <main className="container mx-auto px-4 md:px-6 py-8">
-      <h1 className="text-3xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
+    <main className="max-w-6xl mx-auto px-6 py-8">
+      <h1 className="text-2xl font-serif text-[#9F836A] mb-6">Mis reservas</h1>
 
       {reservations.length === 0 ? (
-        <div className="rounded-xl border p-8 text-center">
+        <div className="card text-center">
           <p className="text-muted-foreground mb-4">Aún no tienes reservas registradas.</p>
           <Button onClick={() => router.push("/")}>Ver habitaciones</Button>
         </div>
       ) : (
         <ul className="grid gap-4">
           {reservations.map((r) => (
-            <li key={r.id} className="rounded-xl border p-5 hover:shadow-sm transition">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-medium">Reserva #{r.id}</h2>
+            <li key={r.id} className="card hover:shadow-lg transition-shadow">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-medium">Reserva #{r.id}</h2>
                   <p className="text-sm text-muted-foreground">
                     Habitación: <span className="font-medium">{roomLabel(r.roomId)}</span>
                   </p>
@@ -143,25 +143,28 @@ export default function MisReservasPage() {
                   <p className="text-sm text-muted-foreground">
                     Huéspedes: <span className="font-medium">{r.adults} adultos</span>
                     {typeof r.children === "number" && r.children > 0 ? (
-                      <> · <span className="font-medium">{r.children} niños</span></>
+                      <>
+                        {" "}
+                        · <span className="font-medium">{r.children} niños</span>
+                      </>
                     ) : null}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
                   <p className="text-sm">
                     Estado: <span className="font-semibold">{r.status}</span>
                   </p>
                   <p className="text-sm">
                     Pago: <span className="font-semibold">{r.paymentStatus}</span>
                   </p>
-                  <p className="text-base mt-1">
+                  <p className="text-lg mt-2">
                     Total: <span className="font-semibold">S/ {Number(r.totalAmount).toFixed(2)}</span>
                   </p>
                 </div>
               </div>
 
               {(r.specialRequests || r.aiNotes) && (
-                <div className="mt-3 text-sm">
+                <div className="mt-4 pt-4 border-t space-y-2 text-sm">
                   {r.specialRequests && (
                     <p className="text-muted-foreground">
                       <span className="font-medium">Solicitudes especiales:</span> {r.specialRequests}
@@ -175,9 +178,10 @@ export default function MisReservasPage() {
                 </div>
               )}
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="text-xs text-muted-foreground">Creada: {fmtDate(r.createdAt)}</span>
-                <span className="text-xs text-muted-foreground">Actualizada: {fmtDate(r.updatedAt)}</span>
+              <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                <span>Creada: {fmtDate(r.createdAt)}</span>
+                <span>·</span>
+                <span>Actualizada: {fmtDate(r.updatedAt)}</span>
               </div>
             </li>
           ))}

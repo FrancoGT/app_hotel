@@ -270,21 +270,23 @@ export default function RoomList() {
           )}
         </div>
       )}
-      <div className="text-center mb-2 mt-2">
-        <h1 className="text-lg md:text-xl font-semibold text-gray-800 tracking-tight mb-1 leading-snug">
+      <div className="text-center mb-6 mt-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight mb-1 leading-tight">
           Nuestras Habitaciones
         </h1>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
         {rooms.map((room) => (
           <div key={room.id} className="card">
-            <h2 className="text-2xl font-bold mb-2">Habitación {room.roomNumber}</h2>
-            <p className="text-sm text-[var(--illary-text-light)] mb-2">{room.description}</p>
-            <p className="text-sm">Piso: {room.floor}</p>
-            <p className="text-sm">Ocupación máxima: {room.maxOccupancy} personas</p>
-            <p className="text-sm mb-2">Estado: {room.status}</p>
-            <p className="price">S/ {room.pricePerNight} por noche</p>
-            <ul className="mt-4 list-disc list-inside text-sm text-[var(--illary-text-light)]">
+            <h2 className="text-xl font-bold mb-2 text-gray-800">Habitación {room.roomNumber}</h2>
+            <p className="text-sm text-[var(--illary-text-light)] mb-2 leading-relaxed">{room.description}</p>
+            <p className="text-sm text-gray-600">Piso: {room.floor}</p>
+            <p className="text-sm text-gray-600">Ocupación máxima: {room.maxOccupancy} personas</p>
+            <p className="text-sm text-gray-600 mb-3">Estado: {room.status}</p>
+            <p className="price text-2xl font-bold text-[var(--illary-primary)] my-3">
+              S/ {room.pricePerNight} <span className="text-sm font-normal text-gray-500">por noche</span>
+            </p>
+            <ul className="mt-3 list-disc list-inside text-sm text-[var(--illary-text-light)] space-y-1">
               {room.features.map((feature, idx) => (
                 <li key={idx}>{feature}</li>
               ))}

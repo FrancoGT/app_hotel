@@ -1,193 +1,731 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Variables CSS personalizadas */
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --illary-primary: #9f836a;
-  --illary-primary-dark: #8a7158;
-  --illary-primary-light: #b8a08a;
-  --illary-background: #fdfaf7;
-  --illary-text: #2c2c2c;
-  --illary-text-light: #5a5a5a;
-  --illary-border: #e8e0d6;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* Fondo global y tipografía */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Colores base del sistema */
+  --dark-color: #323a45;
+  --color-fff: #ffffff;
+  --color-100: #f0f0f0;
+  --color-200: #eeeeee;
+  --color-300: #e0e0e0;
+  --color-400: #bdbdbd;
+  --color-500: #555353;
+  --color-600: #464545;
+  --color-700: #363535;
+  --color-800: #252525;
+  --color-900: #181818;
+  --color-000: #000000;
+
+  /* Colores del tema */
+  --border-color: #F0F0F0;
+  --card-color: #ffffff;
+  --body-color: #f4f7f6;
+  --sidebar-color: #fcfcfc;
+  --primary-color: #0d6efd;
+  --secondary-color: #ffd55d;
+
+  /* Agregando variables ILLARY faltantes para los componentes */
+  --illary-primary: #6b5b4e;
+  --illary-primary-dark: #564838;
+  --illary-text-light: #6b7280;
+  --text-muted: #9ca3af;
+
+  /* Colores para gráficos */
+  --chart-color1: #2794eb;
+  --chart-color2: #17b3c1;
+  --chart-color3: #64868e;
+  --chart-color4: #47d6b6;
+  --chart-color5: #4362d0;
+
+  --sidebar-img: url(https://alui.thememakker.com/html/assets/images/sidebar-bg/sidebar-1.jpg);
+}
+
+/* === TEMA OSCURO === */
+[data-theme="dark"] {
+  --color-fff: #000000;
+  --color-100: #212121;
+  --color-200: #424242;
+  --color-300: #616161;
+  --color-400: #757575;
+  --color-500: #8f8f8f;
+  --color-600: #bdbdbd;
+  --color-700: #e0e0e0;
+  --color-800: #eeeeee;
+  --color-900: #f0f0f0;
+  --color-000: #ffffff;
+  --border-color: #353535;
+  --card-color: #262727;
+  --body-color: #1e1f20;
+
+  /* Variables ILLARY para tema oscuro */
+  --illary-primary: #8b7b6e;
+  --illary-primary-dark: #6b5b4e;
+  --illary-text-light: #9ca3af;
+  --text-muted: #6b7280;
+}
+
+/* === RESETEO Y TIPOGRAFÍA === */
+html,
 body {
-  background-color: var(--illary-background);
-  color: var(--illary-text);
-  font-family: "Playfair Display", serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background-color: var(--body-color);
+  color: var(--color-500);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.6;
-  font-weight: 400;
 }
 
-/* Encabezados */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--illary-primary);
-  font-family: "Playfair Display", serif;
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: 0.5em;
+/* === ESTILOS DEL LAYOUT PRINCIPAL === */
+#layout-c {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
 }
 
-h1 {
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 700;
-  text-align: center;
+/* ===== SIDEBAR ===== */
+#layout-c .sidebar {
+  background: var(--primary-color);
+  width: 260px;
+  height: calc(100vh - 32px);
+  overflow-y: auto;
+  transition: ease 0.2s;
+  color: var(--color-fff);
 }
 
-h2 {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
+#layout-c .sidebar .menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-h3 {
-  font-size: clamp(1.25rem, 2.5vw, 2rem);
-  margin-bottom: 0.25em;
-  color: var(--illary-primary);
-}
-
-/* Enlaces */
-a {
-  color: var(--illary-primary);
+#layout-c .sidebar .menu-list .m-link {
+  color: var(--color-fff);
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
   text-decoration: none;
-  transition: all 0.3s ease;
-}
-a:hover {
-  color: var(--illary-primary-dark);
-  text-decoration: underline;
+  font-size: 0.95rem;
+  transition: color 0.2s;
 }
 
-/* BOTONES PERSONALIZADOS */
+#layout-c .sidebar .menu-list .m-link:hover,
+#layout-c .sidebar .menu-list .m-link.active {
+  color: var(--secondary-color);
+}
+
+#layout-c .sidebar .menu-list .m-link .fa {
+  width: 24px;
+  text-align: center;
+  margin-right: 8px;
+}
+
+/* ===== MAIN ===== */
+#layout-c .main {
+  flex: 1;
+  background-color: var(--body-color);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 24px;
+
+  height: 100vh;}
+
+/* === SCROLLBAR PERSONALIZADO === */
+#layout-c .main::-webkit-scrollbar {
+  width: 4px;
+}
+#layout-c .main::-webkit-scrollbar-thumb {
+  background-color: var(--secondary-color);
+  border-radius: 4px;
+}
+
+/* === MEDIA QUERIES === */
+@media (max-width: 1279px) {
+  #layout-c .sidebar {
+    position: fixed;
+    left: -400px;
+    z-index: 10;
+  }
+  #layout-c .sidebar.open {
+    left: 0;
+  }
+}
+
+@media (max-width: 567px) {
+  #layout-c .sidebar {
+    width: 200px;
+  
+  #layout-c .main {
+    height: calc(100vh - 60px);
+    margin-top: 60px;
+  }
+}
+
+}
+
+/* === CLASES DE UTILIDAD === */
+
+/* Mejorando la clase .card con mejor espaciado, sombras y bordes */
+.card {
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Agregando clase .btn-illary que faltaba - botón principal con buen contraste */
 .btn-illary {
-  border: 2px solid var(--illary-primary);
-  color: var(--illary-primary);
-  padding: 0.75rem 1.5rem;
-  background-color: transparent;
-  border-radius: 0.375rem;
-  transition: all 0.3s ease;
-  font-family: "Playfair Display", serif;
-  font-weight: 500;
+  background-color: var(--illary-primary);
+  color: var(--color-fff);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 0.875rem;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
 .btn-illary:hover {
-  background-color: var(--illary-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(159, 131, 106, 0.3);
+  background-color: var(--illary-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
 .btn-illary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-illary:focus {
+  outline: 2px solid var(--illary-primary);
+  outline-offset: 2px;
+}
+
+/* Clase .btn-primary mejorada con mejor contraste */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
   transform: translateY(0);
 }
 
-.btn-primary-illary {
-  background-color: var(--illary-primary);
-  color: white;
-  border: none;
-}
-.btn-primary-illary:hover {
-  background-color: var(--illary-primary-dark);
-  color: white;
-}
-
-/* TARJETAS */
-.card {
-  background: white;
-  border: 1px solid var(--illary-border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(159, 131, 106, 0.2);
-  border-color: var(--illary-primary);
-}
-.card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--illary-primary);
-}
-.card p {
-  font-size: 0.95rem;
-  color: var(--illary-text-light);
-}
-
-/* PRECIO */
+/* Agregando clase .price para mostrar precios destacados */
 .price {
-  color: #059669;
+  font-size: 1.5rem;
   font-weight: 700;
-  font-size: 1.375rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  color: var(--illary-primary);
+  margin: 12px 0;
+  display: block;
 }
 
-/* Animación */
-.fade-in {
-  animation: fadeIn 0.6s ease-in;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Agregando clase .soft-shadow usada en el header */
+.soft-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* Logo */
+/* Mejorando clases de texto con mejor legibilidad */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-primary {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Agregando estilos para el logo del header */
 .header-logo {
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
 }
+
 .header-logo:hover {
   transform: scale(1.05);
 }
 
-/* Sombra */
-.soft-shadow {
-  box-shadow: 0 2px 15px rgba(159, 131, 106, 0.1);
+/* Mejorando estilos para formularios */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="number"],
+textarea,
+select {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  color: var(--color-500);
 }
 
-/* Línea decorativa */
-.decorative-border {
-  position: relative;
-}
-.decorative-border::after {
-  content: "";
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--illary-primary), transparent);
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--illary-primary);
+  box-shadow: 0 0 0 3px rgba(107, 91, 78, 0.1);
 }
 
-/* Texto adaptable */
-.responsive-text {
-  font-size: clamp(0.875rem, 2vw, 1rem);
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
 }
 
-/* Mobile */
-@media (max-width: 768px) {
+/* Estilos para mejorar accesibilidad en enlaces */
+a {
+  color: var(--illary-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--illary-primary-dark);
+}
+
+a:focus {
+  outline: 2px solid var(--illary-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Mejorando la clase container para mejor responsividad */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+/* Estilos para listas con mejor espaciado */
+ul,
+ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+/* Mejorando títulos con mejor jerarquía visual */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--dark-color);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 2.25rem;
+}
+h2 {
+  font-size: 1.875rem;
+}
+h3 {
+  font-size: 1.5rem;
+}
+h4 {
+  font-size: 1.25rem;
+}
+h5 {
+  font-size: 1.125rem;
+}
+h6 {
+  font-size: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
   body {
-    font-size: 0.9rem;
+    @apply bg-background text-foreground;
+  }
+}
+
+/* === BLOQUE AGREGADO DESDE sugerencias.txt (ADAPTADO, SIN ROMPER LO EXISTENTE) === */
+
+/* Reset suave extra para html/body, dentro de @layer base */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    line-height: 1.6;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+}
+
+/* Estilos de layout + utilidades, dentro de @layer components para no chocar con Tailwind */
+@layer components {
+
+  /* ===== LAYOUT GENERAL: SIDEBAR + MAIN (#layout-c) ===== */
+  #layout-c {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
   }
 
-  .card {
-    padding: 1rem;
+  /* Sidebar izquierda */
+  #layout-c .sidebar {
+    background: var(--illary-primary);
+    width: 260px;
+    height: calc(100vh - 32px);
+    overflow-y: auto;
+    transition: ease 0.2s;
+    color: #ffffff;
   }
 
-  .btn-illary {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.8rem;
+  #layout-c .sidebar .menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  #layout-c .sidebar .menu-list .m-link {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+
+  #layout-c .sidebar .menu-list .m-link:hover,
+  #layout-c .sidebar .menu-list .m-link.active {
+    color: var(--illary-secondary);
+  }
+
+  #layout-c .sidebar .menu-list .m-link .fa {
+    width: 24px;
+    text-align: center;
+    margin-right: 8px;
+  }
+
+  /* Contenido principal */
+  #layout-c .main {
+    flex: 1;
+    background-color: var(--illary-body-bg);
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    padding: 24px;
+    height: 100vh;
+  }
+
+  /* Scrollbar del main */
+  #layout-c .main::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  #layout-c .main::-webkit-scrollbar-thumb {
+    background-color: var(--illary-secondary);
+    border-radius: 4px;
+  }
+
+  /* Sidebar en pantallas medianas/pequeñas */
+  @media (max-width: 1279px) {
+    #layout-c .sidebar {
+      position: fixed;
+      left: -400px;
+      z-index: 10;
+    }
+
+    #layout-c .sidebar.open {
+      left: 0;
+    }
+  }
+
+  @media (max-width: 567px) {
+    #layout-c .sidebar {
+      width: 200px;
+    }
+
+    #layout-c .main {
+      height: calc(100vh - 60px);
+      margin-top: 60px;
+    }
+  }
+
+  /* ===== UTILIDADES VISUALES ===== */
+
+  /* Sombra suave reutilizable (por ej. para el header) */
+  .soft-shadow {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Botón primario genérico (no pisa btn-illary existente) */
+  .btn-primary {
+    background-color: var(--illary-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* Precio destacado genérico (no toca .card .price que ya usas) */
+  .price-strong {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--illary-primary);
+    margin: 12px 0;
+    display: block;
+  }
+
+  /* Textos auxiliares */
+  .text-muted {
+    color: #9ca3af;
+  }
+
+  .text-primary {
+    color: var(--illary-primary);
+    font-weight: 500;
+  }
+
+  /* Logo en el header */
+  .header-logo {
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+  }
+
+  .header-logo:hover {
+    transform: scale(1.05);
+  }
+
+  /* Campos de formulario globales */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="number"],
+  textarea,
+  select {
+    background-color: var(--illary-card-bg);
+    border: 1px solid var(--illary-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    color: var(--illary-text-light);
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--illary-primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  /* Enlaces accesibles y con buen contraste */
+  a {
+    color: var(--illary-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: #0056b3;
+  }
+
+  a:focus {
+    outline: 2px solid var(--illary-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 }
