@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { registerUser } from "@/lib/fetcher"
 import { Button } from "@/components/ui/button"
 
@@ -167,7 +166,7 @@ export default function RegisterPage() {
         id_document_type: form.id_document_type,
         id_document_number: form.id_document_number,
         login: form.login,
-        password: form.pass, // Enviamos como 'password', la función lo convierte a 'pass'
+        password: form.pass,
         telephone: form.telephone,
         username: form.username,
         position: form.position,
@@ -202,7 +201,7 @@ export default function RegisterPage() {
   }
 
   const getFieldClassName = (fieldName: keyof FieldErrors) => {
-    const baseClass = "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring transition-colors"
+    const baseClass = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all"
     const hasError = fieldErrors[fieldName]
 
     if (hasError) {
@@ -213,159 +212,234 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 border border-gray-300 rounded-lg shadow-md">
-      <h2 className="text-2xl font-serif text-center text-[#9F836A] mb-4">Crear cuenta</h2>
-
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">{error}</div>}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Nombre */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Nombres <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="first_name"
-            value={form.first_name}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("first_name")}
-            placeholder="Ingresa tus nombres"
-          />
-          {fieldErrors.first_name && <p className="text-red-500 text-xs mt-1">{fieldErrors.first_name}</p>}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-serif text-[#9F836A] mb-2">Crear cuenta</h2>
+          <p className="text-gray-600">Completa el formulario para registrarte en Hotel Hillary</p>
         </div>
 
-        {/* Apellidos */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Apellidos <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="last_name"
-            value={form.last_name}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("last_name")}
-            placeholder="Ingresa tus apellidos"
-          />
-          {fieldErrors.last_name && <p className="text-red-500 text-xs mt-1">{fieldErrors.last_name}</p>}
-        </div>
-
-        {/* Tipo de documento */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Tipo de documento <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="id_document_type"
-            value={form.id_document_type}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-[#9F836A]"
-          >
-            <option value="DNI">DNI</option>
-            <option value="CE">CE</option>
-          </select>
-        </div>
-
-        {/* Número de documento */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Número de documento <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="id_document_number"
-            value={form.id_document_number}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("id_document_number")}
-            placeholder={form.id_document_type === "DNI" ? "12345678" : "123456789"}
-          />
-          {fieldErrors.id_document_number && (
-            <p className="text-red-500 text-xs mt-1">{fieldErrors.id_document_number}</p>
+        <div className="card bg-white">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start gap-2">
+              <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
           )}
-        </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Correo Electrónico <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            name="login"
-            value={form.login}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("login")}
-            placeholder="ejemplo@correo.com"
-          />
-          {fieldErrors.login && <p className="text-red-500 text-xs mt-1">{fieldErrors.login}</p>}
-        </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombres <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClassName("first_name")}
+                  placeholder="Ingresa tus nombres"
+                />
+                {fieldErrors.first_name && (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {fieldErrors.first_name}
+                  </p>
+                )}
+              </div>
 
-        {/* Contraseña */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Contraseña <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="password"
-            name="pass"
-            value={form.pass}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("pass")}
-            placeholder="Mínimo 6 caracteres"
-          />
-          {fieldErrors.pass && <p className="text-red-500 text-xs mt-1">{fieldErrors.pass}</p>}
-          <p className="text-xs text-gray-500 mt-1">Debe contener al menos una mayúscula y una minúscula</p>
-        </div>
+              {/* Apellidos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Apellidos <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClassName("last_name")}
+                  placeholder="Ingresa tus apellidos"
+                />
+                {fieldErrors.last_name && (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {fieldErrors.last_name}
+                  </p>
+                )}
+              </div>
 
-        {/* Teléfono */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Teléfono <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="telephone"
-            value={form.telephone}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("telephone")}
-            placeholder="987654321"
-          />
-          {fieldErrors.telephone && <p className="text-red-500 text-xs mt-1">{fieldErrors.telephone}</p>}
-        </div>
+              {/* Tipo de documento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de documento <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="id_document_type"
+                  value={form.id_document_type}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#9F836A] focus:ring-[#9F836A]/20 transition-all"
+                >
+                  <option value="DNI">DNI</option>
+                  <option value="CE">CE</option>
+                </select>
+              </div>
 
-        {/* Username */}
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Nombre de usuario <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldClassName("username")}
-            placeholder="usuario123"
-          />
-          {fieldErrors.username && <p className="text-red-500 text-xs mt-1">{fieldErrors.username}</p>}
-          <p className="text-xs text-gray-500 mt-1">Solo letras, números y guiones bajos</p>
-        </div>
+              {/* Número de documento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Número de documento <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="id_document_number"
+                  value={form.id_document_number}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClassName("id_document_number")}
+                  placeholder={form.id_document_type === "DNI" ? "12345678" : "123456789"}
+                />
+                {fieldErrors.id_document_number && (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {fieldErrors.id_document_number}
+                  </p>
+                )}
+              </div>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-[#9F836A] hover:bg-[#8A7158] text-white py-2 font-serif"
-        >
-          {loading ? "Registrando..." : "Registrarse"}
-        </Button>
-      </form>
+              {/* Nombre de usuario */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre de usuario <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClassName("username")}
+                  placeholder="usuario123"
+                />
+                {fieldErrors.username && (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {fieldErrors.username}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1.5">Solo letras, números y guiones bajos</p>
+              </div>
+
+              {/* Teléfono */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="telephone"
+                  value={form.telephone}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClassName("telephone")}
+                  placeholder="987654321"
+                />
+                {fieldErrors.telephone && (
+                  <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {fieldErrors.telephone}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t pt-6 space-y-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Credenciales de acceso</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Correo Electrónico <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="login"
+                    value={form.login}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={getFieldClassName("login")}
+                    placeholder="ejemplo@correo.com"
+                  />
+                  {fieldErrors.login && (
+                    <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                      <span>⚠</span> {fieldErrors.login}
+                    </p>
+                  )}
+                </div>
+
+                {/* Contraseña */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contraseña <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="pass"
+                    value={form.pass}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={getFieldClassName("pass")}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  {fieldErrors.pass && (
+                    <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+                      <span>⚠</span> {fieldErrors.pass}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1.5">Debe contener al menos una mayúscula y una minúscula</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-[#9F836A] hover:bg-[#8A7158] text-white py-3 font-serif text-lg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Registrando...
+                  </span>
+                ) : (
+                  "Crear cuenta"
+                )}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-medium text-lg rounded-lg transition-colors"
+              >
+                Ya tengo cuenta
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }
