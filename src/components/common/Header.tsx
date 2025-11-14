@@ -21,10 +21,15 @@ export default function Header() {
   const router = useRouter()
   const { isLoggedIn, user, login, logout } = useAuth()
 
+  // Cargar usuario desde token solo si:
+  // - Hay token en localStorage
+  // - Aún no estamos logueados en el contexto
   useEffect(() => {
     const loadUser = async () => {
+      if (typeof window === "undefined") return
+
       const token = localStorage.getItem("access_token")
-      if (!token) return
+      if (!token || isLoggedIn) return
 
       try {
         const me = await fetchCurrentUser(token)
@@ -39,29 +44,49 @@ export default function Header() {
         )
       } catch (error) {
         console.error("Error al cargar usuario:", error)
+        // Si el token ya no sirve, limpiamos todo
+        localStorage.removeItem("access_token")
         logout()
       }
     }
 
     loadUser()
-  }, [login, logout])
+  }, [isLoggedIn, login, logout])
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem("access_token")
-      if (token) await logoutUser(token)
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("access_token")
+
+        // 1. Avisamos al backend (si falla, igual seguiremos)
+        if (token) {
+          try {
+            await logoutUser(token)
+          } catch (err) {
+            console.error("Error al cerrar sesión en el backend:", err)
+          }
+
+          // 2. Siempre limpiamos el token del cliente
+          localStorage.removeItem("access_token")
+        }
+      }
     } catch (error) {
       console.error("Error al cerrar sesión:", error)
     } finally {
+      // 3. Limpiar el contexto de auth
       logout()
-      router.push("/login")
+
+      // 4. Redirigir a login (replace para que no pueda volver con back)
+      router.replace("/login")
+      // Si quieres ser ultra agresivo:
+      // window.location.href = "/login"
     }
   }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-color)] bg-[var(--card-color)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--card-color)]/60 soft-shadow">
       <div className="container mx-auto px-4 md:px-6">
-        {/* Altura compacta: h-16 (igual a la nueva versión) */}
+        {/* Altura compacta: h-16 */}
         <div className="flex h-16 items-center justify-between">
           <Link
             href="/"
@@ -164,7 +189,7 @@ export default function Header() {
                   </Link>
                 </div>
 
-                {/* AQUÍ ES DONDE CAMBIAMOS: botón móvil ahora es DropdownMenu (funcional) */}
+                {/* Menú móvil */}
                 <div className="md:hidden">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
