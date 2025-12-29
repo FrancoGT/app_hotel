@@ -42,7 +42,6 @@ export default function LoginPage() {
     }
   }
 
-
   // 2) handleChange con clave tipada
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -53,7 +52,6 @@ export default function LoginPage() {
     if (error) setError("")
   }
 
-
   // 3) handleBlur con clave tipada
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -62,7 +60,6 @@ export default function LoginPage() {
     if (fieldError) setFieldErrors((prev) => ({ ...prev, [key]: fieldError }))
   }
 
-
   // 4) validateForm sin Object.keys (evita el cast)
   const validateForm = (): boolean => {
     const errors: FieldErrors = {}
@@ -70,7 +67,7 @@ export default function LoginPage() {
 
     const KEYS: (keyof FormData)[] = ["login", "password"]
     for (const key of KEYS) {
-      const val = (key === "login" ? form[key].trim() : form[key]) // normaliza login
+      const val = key === "login" ? form[key].trim() : form[key] // normaliza login
       const err = validateField(key, val)
       if (err) {
         errors[key] = err
@@ -81,7 +78,6 @@ export default function LoginPage() {
     setFieldErrors(errors)
     return isValid
   }
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,16 +91,19 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
-      // loginUser devuelve PLANO: { access_token, token_type, user: { displayName, login, ... } }
+      // loginUser (de lib/auth) devuelve: { access_token, token_type, user: CurrentUser }
       const response = await loginUser(form)
 
+      // response.user es CurrentUser (id, login, displayName, admin, employee, status, roles)
       login(
         {
-          name: response.user.displayName || "Usuario",
+          name: response.user.displayName || response.user.login || "Usuario",
           email: response.user.login || form.login,
           avatar: "/placeholder.svg?height=32&width=32",
+          admin: response.user.admin,       // 👈 importante para /admin
+          roles: response.user.roles,       // 👈 por si quieres usar roles también
         },
-        response.access_token
+        response.access_token,
       )
 
       router.push("/")
@@ -221,14 +220,20 @@ export default function LoginPage() {
         <div className="text-center space-y-4">
           <p className="text-sm text-gray-500">
             ¿No tienes una cuenta?{" "}
-            <button onClick={() => router.push("/register")} className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors">
+            <button
+              onClick={() => router.push("/register")}
+              className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors"
+            >
               Regístrate aquí
             </button>
           </p>
 
           <p className="text-sm text-gray-500">
             ¿Problemas para acceder?{" "}
-            <button onClick={() => router.push("/support")} className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors">
+            <button
+              onClick={() => router.push("/support")}
+              className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors"
+            >
               Contacta soporte
             </button>
           </p>

@@ -1,11 +1,14 @@
+// src/context/AuthContext.tsx
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
 
-type UserType = {
+export type UserType = {
   name: string
   email: string
   avatar: string
+  admin?: boolean
+  roles?: string[]
 }
 
 type AuthContextType = {
@@ -13,6 +16,7 @@ type AuthContextType = {
   user: UserType | null
   login: (user: UserType, token: string) => void
   logout: () => void
+  isAdmin: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   login: () => {},
   logout: () => {},
+  isAdmin: () => false,
 })
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -27,16 +32,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null)
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     const token = localStorage.getItem("access_token")
     const userData = localStorage.getItem("user")
     if (token && userData) {
-      const parsed = JSON.parse(userData)
-      setUser({
-        name: parsed.displayName || "Usuario",
-        email: parsed.login || "",
-        avatar: "/placeholder.svg?height=32&width=32",
-      })
-      setIsLoggedIn(true)
+      try {
+        const parsed = JSON.parse(userData) as UserType
+        setUser(parsed)          // 👈 usamos lo que tú guardaste
+        setIsLoggedIn(true)
+      } catch (e) {
+        console.error("Error al parsear usuario desde localStorage", e)
+        localStorage.removeItem("access_token")
+        localStorage.removeItem("user")
+      }
     }
   }, [])
 
@@ -54,8 +63,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoggedIn(false)
   }
 
+  const isAdmin = () => {
+    return !!user?.admin || (user?.roles?.includes("Administradores") ?? false)
+  }
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

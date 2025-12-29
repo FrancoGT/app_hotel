@@ -19,7 +19,7 @@ import { useEffect } from "react"
 
 export default function Header() {
   const router = useRouter()
-  const { isLoggedIn, user, login, logout } = useAuth()
+  const { isLoggedIn, user, login, logout, isAdmin } = useAuth()
 
   // Cargar usuario desde token solo si:
   // - Hay token en localStorage
@@ -33,12 +33,15 @@ export default function Header() {
 
       try {
         const me = await fetchCurrentUser(token)
+        // me es CurrentUser (id, login, displayName, admin, employee, status, roles)
 
         login(
           {
-            name: me.displayName ?? "Usuario",
+            name: me.displayName || me.login || "Usuario",
             email: me.login,
             avatar: "/placeholder.svg?height=32&width=32",
+            admin: me.admin,
+            roles: me.roles,
           },
           token,
         )
@@ -78,8 +81,6 @@ export default function Header() {
 
       // 4. Redirigir a login (replace para que no pueda volver con back)
       router.replace("/login")
-      // Si quieres ser ultra agresivo:
-      // window.location.href = "/login"
     }
   }
 
@@ -101,6 +102,7 @@ export default function Header() {
             />
           </Link>
 
+          {/* NAV DESKTOP */}
           <nav className="hidden lg:flex items-center space-x-8">
             <Link
               href="/"
@@ -121,6 +123,16 @@ export default function Header() {
                 className="text-sm font-medium text-[var(--illary-primary)] font-serif hover:underline"
               >
                 Mis reservas
+              </Link>
+            )}
+
+            {/* 🔐 OPCIÓN GESTIÓN SOLO PARA ADMIN */}
+            {isLoggedIn && isAdmin() && (
+              <Link
+                href="/admin"
+                className="text-sm font-medium text-[var(--illary-primary)] font-serif hover:underline"
+              >
+                Gestión
               </Link>
             )}
           </nav>
@@ -154,6 +166,18 @@ export default function Header() {
                       <span>Mis reservas</span>
                     </Link>
                   </DropdownMenuItem>
+
+                  {/* 🔐 GESTIÓN EN EL DROPDOWN SOLO PARA ADMIN */}
+                  {isAdmin() && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Gestión</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
 
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
@@ -189,7 +213,7 @@ export default function Header() {
                   </Link>
                 </div>
 
-                {/* Menú móvil */}
+                {/* Menú móvil cuando NO está logueado */}
                 <div className="md:hidden">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
