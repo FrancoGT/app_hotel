@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev",
+    "dev": "next dev",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "next lint",
@@ -24,8 +24,8 @@
     "ldrs": "^1.1.9",
     "lucide-react": "^0.517.0",
     "next": "^16.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
