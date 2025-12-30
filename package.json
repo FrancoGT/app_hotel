@@ -23,7 +23,7 @@
     "clsx": "^2.1.1",
     "ldrs": "^1.1.9",
     "lucide-react": "^0.517.0",
-    "next": "15.3.3",
+    "next": "^16.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.3.1"
