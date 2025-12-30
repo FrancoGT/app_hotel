@@ -1,7 +1,6 @@
 import type { Room, RoomPayload } from "../types/room"
-
-// 1. Configuración de la URL Base
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1").replace(/\/$/, "")
+// IMPORTAMOS LA URL DESDE TU ARCHIVO DE CONFIGURACIÓN
+import { API_BASE_URL } from "@/lib/api"
 
 // 2. Helpers de Autenticación
 async function getAuthToken() {
@@ -22,6 +21,7 @@ async function fetchWithAuth<T>(
     ...(options.headers || {}),
   }
 
+  // Aquí usamos la variable importada
   const url = `${API_BASE_URL}${path}`
 
   if (options.method !== "GET" && options.method !== undefined) {
@@ -83,6 +83,5 @@ export const roomService = {
     }),
 }
 
-// 5. EXPORTACIONES DE COMPATIBILIDAD (Esto soluciona tu error)
-// Esto permite que "import { fetchRooms } from ..." funcione correctamente
+// 5. EXPORTACIONES DE COMPATIBILIDAD
 export const fetchRooms = roomService.list;

@@ -1,6 +1,6 @@
 import type { Establishment, EstablishmentPayload } from "../types/establishment"
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1").replace(/\/$/, "")
+// IMPORTAMOS LA URL DESDE TU ARCHIVO DE CONFIGURACIÓN (Para respetar la variable de entorno)
+import { API_BASE_URL } from "@/lib/api"
 
 async function getAuthToken() {
   if (typeof window === "undefined") return null
@@ -18,10 +18,11 @@ async function fetchWithAuth<T>(
     ...(options.headers || {}),
   }
 
+  // Usamos la variable importada desde @/lib/api
   const url = `${API_BASE_URL}${path}`
   
   // Log útil para depurar qué datos exactos se están enviando
-  if (options.method !== "GET") {
+  if (options.method !== "GET" && options.method !== undefined) {
     console.log(`[establishmentService] ${options.method} request body:`, options.body)
   }
 
