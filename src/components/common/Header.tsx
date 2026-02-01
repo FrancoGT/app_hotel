@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Menu, User, LogOut, Settings, CalendarCheck } from "lucide-react"
+import { Menu, User, LogOut, Settings, CalendarCheck, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -171,7 +171,8 @@ export default function Header() {
                   {isAdmin() && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
-                        <Settings className="mr-2 h-4 w-4" />
+                        {/* He cambiado Settings por LayoutDashboard */}
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> 
                         <span>Gestión</span>
                       </Link>
                     </DropdownMenuItem>
