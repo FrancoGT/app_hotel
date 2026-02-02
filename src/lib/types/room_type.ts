@@ -5,7 +5,6 @@ export interface RoomType {
   basePrice: number
   capacity: number
   amenities: string[]
-  imageUrl: string
   status: string // "A" (Activo), "I" (Inactivo), etc.
   createdBy?: number
   updatedBy?: number
@@ -20,7 +19,6 @@ export interface RoomTypePayload {
   basePrice: number
   capacity: number
   amenities: string[]
-  imageUrl: string
   status: string
   createdBy?: number // Opcional, dependiendo de si el backend lo toma del token o del body
 }

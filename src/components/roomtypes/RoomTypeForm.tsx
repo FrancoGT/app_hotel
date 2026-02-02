@@ -19,7 +19,6 @@ type FormState = {
   basePrice: string
   capacity: string
   amenities: string
-  imageUrl: string
   status: string
 }
 
@@ -32,8 +31,7 @@ export function RoomTypeForm({ initialData, onSubmit, onCancel, isSaving }: Room
     capacity: initialData.capacity?.toString() ?? "1",
     // Convertimos el array de amenidades a un string separado por comas para el input
     amenities: Array.isArray(initialData.amenities) ? initialData.amenities.join(", ") : "",
-    imageUrl: initialData.imageUrl ?? "",
-    status: initialData.status ?? "A",
+    status: initialData.status ?? "A"
   })
 
   const handleChange = (
@@ -58,7 +56,6 @@ export function RoomTypeForm({ initialData, onSubmit, onCancel, isSaving }: Room
       basePrice: Number.parseFloat(form.basePrice) || 0,
       capacity: Number.parseInt(form.capacity) || 1,
       amenities: amenitiesArray,
-      imageUrl: form.imageUrl,
       status: form.status,
       // NOTA: 'createdBy'/'updatedBy' se manejan en el backend con el token del usuario.
     }
@@ -134,14 +131,6 @@ export function RoomTypeForm({ initialData, onSubmit, onCancel, isSaving }: Room
           />
           <p className="text-[10px] text-gray-400 text-right">Escribe las características separadas por comas.</p>
         </div>
-
-        <FormField 
-            label="URL de Imagen (Opcional)" 
-            name="imageUrl" 
-            value={form.imageUrl} 
-            onChange={handleChange} 
-            placeholder="https://ejemplo.com/foto.jpg"
-        />
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-[var(--color-600)]">Estado</label>

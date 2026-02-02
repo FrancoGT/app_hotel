@@ -28,6 +28,42 @@ export default function RoomTypesAdminPage() {
   } = useRoomTypes()
 
   /* ==========================
+     TOAST STATE (Agregado)
+  ========================== */
+  const [toast, setToast] = useState<{
+    show: boolean
+    message: string
+    type: "success" | "error" | "warning"
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+  })
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "warning" = "success"
+  ) => {
+    setToast({ show: true, message, type })
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" })
+    }, 3000)
+  }
+
+  /* ==========================
+     CONFIRM DIALOG STATE (Agregado)
+  ========================== */
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean
+    message: string
+    onConfirm: () => void
+  }>({
+    show: false,
+    message: "",
+    onConfirm: () => {},
+  })
+
+  /* ==========================
      AUTH GUARD
   ========================== */
   const [guardState, setGuardState] = useState<GuardState>("loading")
@@ -45,8 +81,7 @@ export default function RoomTypesAdminPage() {
 
     const isAdmin =
       user.admin === true ||
-      (Array.isArray(user.roles) &&
-        user.roles.includes("Administradores"))
+      (Array.isArray(user.roles) && user.roles.includes("Administradores"))
 
     setGuardState(isAdmin ? "ready" : "unauthorized")
   }, [isLoggedIn, user])
@@ -74,9 +109,7 @@ export default function RoomTypesAdminPage() {
 
   const filteredRoomTypes = useMemo(() => {
     if (!search.trim()) return roomTypes
-
     const q = search.toLowerCase()
-
     return roomTypes.filter((rt) =>
       [rt.name, rt.description]
         .filter(Boolean)
@@ -92,7 +125,7 @@ export default function RoomTypesAdminPage() {
   }, [filteredRoomTypes, page])
 
   /* ==========================
-     CRUD HANDLERS
+     CRUD HANDLERS (Actualizados)
   ========================== */
   const handleCreate = () => {
     if (guardState !== "ready") return
@@ -109,24 +142,21 @@ export default function RoomTypesAdminPage() {
   const handleDelete = async (item: RoomType) => {
     if (guardState !== "ready") return
 
-    if (
-      !confirm(
-        `¿Seguro que deseas eliminar el tipo de habitación "${item.name}"?`
-      )
-    ) {
-      return
-    }
-
-    try {
-      await deleteRoomType(item.id)
-    } catch (e: any) {
-      console.error("Error al eliminar tipo:", e)
-      alert(
-        `No se pudo eliminar el registro:\n${
-          e?.message ?? "Error desconocido"
-        }`
-      )
-    }
+    setConfirmDialog({
+      show: true,
+      message: `¿Seguro que deseas eliminar el tipo de habitación "${item.name}"?`,
+      onConfirm: async () => {
+        try {
+          await deleteRoomType(item.id)
+          showToast("Tipo de habitación eliminado exitosamente", "success")
+        } catch (e: any) {
+          console.error("Error al eliminar tipo:", e)
+          showToast(e?.message ?? "No se pudo eliminar el registro", "error")
+        } finally {
+          setConfirmDialog({ show: false, message: "", onConfirm: () => {} })
+        }
+      },
+    })
   }
 
   const handleSubmitForm = async (data: RoomTypePayload) => {
@@ -136,17 +166,16 @@ export default function RoomTypesAdminPage() {
     try {
       if (editing) {
         await updateRoomType(editing.id, data)
+        showToast("Tipo actualizado exitosamente", "success")
       } else {
         await createRoomType(data)
+        showToast("Tipo creado exitosamente", "success")
       }
-
       setShowModal(false)
       setEditing(null)
     } catch (e: any) {
       console.error("Error al guardar tipo:", e)
-      alert(
-        `Error al guardar:\n${e?.message ?? "Error desconocido"}`
-      )
+      showToast(e?.message ?? "Error al guardar el tipo de habitación", "error")
     } finally {
       setSaving(false)
     }
@@ -159,9 +188,6 @@ export default function RoomTypesAdminPage() {
     }
   }
 
-  /* ==========================
-     RENDER
-  ========================== */
   return (
     <AuthGuard
       state={guardState}
@@ -188,7 +214,6 @@ export default function RoomTypesAdminPage() {
                          placeholder:text-[var(--color-500)]
                          focus:outline-none focus:ring-2 focus:ring-[var(--dark-color)]"
             />
-
             <span className="text-xs text-[var(--color-500)]">
               {filteredRoomTypes.length} resultados
             </span>
@@ -229,11 +254,9 @@ export default function RoomTypesAdminPage() {
               >
                 Anterior
               </button>
-
               <span className="px-2 text-[var(--color-600)]">
                 Página {page} de {totalPages}
               </span>
-
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
@@ -252,6 +275,57 @@ export default function RoomTypesAdminPage() {
             onSubmit={handleSubmitForm}
             isSaving={saving}
           />
+
+          {/* TOAST NOTIFICATION */}
+          {toast.show && (
+            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[55] w-full max-w-md mx-4 transition-all duration-500 ease-in-out">
+              <div
+                className={`${
+                  toast.type === "success"
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : toast.type === "error"
+                    ? "bg-red-50 border-red-200 text-red-800"
+                    : "bg-yellow-50 border-yellow-200 text-yellow-800"
+                } border p-4 rounded-xl shadow-lg backdrop-blur-sm text-center`}
+              >
+                <p className="text-sm font-medium">{toast.message}</p>
+              </div>
+            </div>
+          )}
+
+          {/* CONFIRM DIALOG */}
+          {confirmDialog.show && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Confirmar acción
+                </h3>
+                <p className="text-gray-600 mb-6">{confirmDialog.message}</p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() =>
+                      setConfirmDialog({
+                        show: false,
+                        message: "",
+                        onConfirm: () => {},
+                      })
+                    }
+                    className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 
+                               hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmDialog.onConfirm}
+                    className="px-4 py-2 rounded-xl bg-red-500 text-white 
+                               hover:bg-red-600 transition-colors text-sm font-medium"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AuthGuard>

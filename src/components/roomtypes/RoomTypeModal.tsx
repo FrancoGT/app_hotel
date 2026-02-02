@@ -22,7 +22,6 @@ export function RoomTypeModal({ isOpen, editing, onClose, onSubmit, isSaving }: 
     basePrice: 0,
     capacity: 1,
     amenities: [],
-    imageUrl: "",
     status: "A",
     createdBy: 0
   }
