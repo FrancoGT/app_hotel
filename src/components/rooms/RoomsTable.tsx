@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import type { Room } from "@/lib/types/room"
 
 interface RoomsTableProps {
@@ -15,6 +16,7 @@ export function RoomsTable({ items, onEdit, onDelete }: RoomsTableProps) {
         <thead>
           <tr className="border-b border-[var(--border-color)] bg-[var(--body-color)]/40">
             <th className="px-4 py-3 text-left font-semibold text-[var(--color-500)]">Nº</th>
+            <th className="px-4 py-3 text-left font-semibold text-[var(--color-500)]">Imagen</th>
             <th className="px-4 py-3 text-left font-semibold text-[var(--color-500)]">Código</th>
             <th className="px-4 py-3 text-left font-semibold text-[var(--color-500)]">Piso</th>
             <th className="px-4 py-3 text-left font-semibold text-[var(--color-500)]">Tipo/Desc</th>
@@ -44,6 +46,26 @@ function RoomTableRow({ room, onEdit, onDelete }: RoomTableRowProps) {
   return (
     <tr className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--body-color)]/50 transition-colors">
       <td className="px-4 py-4 text-[var(--dark-color)] font-medium">{room.id}</td>
+
+      {/* Columna de imagen */}
+      <td className="px-4 py-4">
+        {room.mainImage ? (
+          <div className="relative w-16 h-12 rounded-lg overflow-hidden border border-[var(--border-color)]">
+            <Image
+              src={room.mainImage}
+              alt={`Habitación ${room.roomNumber}`}
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          </div>
+        ) : (
+          <div className="w-16 h-12 rounded-lg border border-dashed border-[var(--border-color)] bg-[var(--body-color)] flex items-center justify-center">
+            <span className="text-[10px] text-[var(--color-400)]">Sin imagen</span>
+          </div>
+        )}
+      </td>
+
       <td className="px-4 py-4 text-[var(--dark-color)] font-medium">{room.roomNumber}</td>
       <td className="px-4 py-4 text-[var(--color-600)]">{room.floor}</td>
       <td className="px-4 py-4 text-[var(--color-600)] max-w-[200px] truncate" title={room.description}>
@@ -64,17 +86,8 @@ function RoomTableRow({ room, onEdit, onDelete }: RoomTableRowProps) {
                        hover:bg-[var(--body-color)]/60 transition-all"
             aria-label="Editar habitación"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
               <path d="m15 5 4 4" />
             </svg>
@@ -87,19 +100,9 @@ function RoomTableRow({ room, onEdit, onDelete }: RoomTableRowProps) {
                        transition-all"
             aria-label="Eliminar habitación"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 11v6" /><path d="M14 11v6" />
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
               <path d="M3 6h18" />
               <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -113,7 +116,7 @@ function RoomTableRow({ room, onEdit, onDelete }: RoomTableRowProps) {
 
 function RoomStatusBadge({ status }: { status?: string }) {
   const s = status?.toLowerCase() || "available"
-  
+
   let styles = "bg-slate-100 text-slate-600 border-slate-200"
   let label = status
 

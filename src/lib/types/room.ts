@@ -7,6 +7,7 @@ export interface Room {
   pricePerNight: number
   description: string
   features: string[]
+  mainImage?: string 
   establishmentId: number
   roomTypeId: number
   createdBy?: number // Opcional, ya que a veces el backend lo llena solo

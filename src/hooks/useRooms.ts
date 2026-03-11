@@ -1,10 +1,8 @@
 import { useState, useCallback } from "react"
-// Asegúrate de que estas rutas coincidan con donde guardaste los archivos anteriores
 import { roomService } from "@/lib/fetcher"
+import { imageService } from "@/lib/services/imageService"
 import type { Room, RoomPayload } from "@/lib/types/room"
 
-// Definimos la interfaz del estado aquí mismo para no depender de un archivo externo extra,
-// a menos que ya tengas un "RoomsState" en types/room.ts
 interface RoomsState {
   items: Room[]
   loading: boolean
@@ -18,18 +16,31 @@ export function useRooms() {
     error: null,
   })
 
-  // GET: Cargar habitaciones
+  // GET: Cargar habitaciones + sus imágenes principales
   const loadRooms = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
     try {
       const data = await roomService.list()
-      setState({ items: data, loading: false, error: null })
+
+      const roomsWithImages = await Promise.all(
+        data.map(async (room: Room) => {
+          try {
+            const images = await imageService.listByEntity("room", room.id)
+            const mainImage = images.find(img => img.is_main)?.url ?? images[0]?.url
+            return { ...room, mainImage }
+          } catch {
+            return room
+          }
+        })
+      )
+
+      setState({ items: roomsWithImages, loading: false, error: null })
     } catch (e: any) {
       console.error(e)
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: "No se pudieron cargar las habitaciones." 
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: "No se pudieron cargar las habitaciones.",
       }))
     }
   }, [])
@@ -38,11 +49,9 @@ export function useRooms() {
   const createRoom = useCallback(async (data: RoomPayload): Promise<Room> => {
     try {
       const created = await roomService.create(data)
-      // Agregamos la nueva habitación al inicio de la lista localmente
       setState(prev => ({ ...prev, items: [created, ...prev.items] }))
       return created
     } catch (error) {
-      // Opcional: manejar error específico de creación si es necesario
       throw error
     }
   }, [])
@@ -51,10 +60,11 @@ export function useRooms() {
   const updateRoom = useCallback(async (id: number, data: RoomPayload): Promise<Room> => {
     try {
       const updated = await roomService.update(id, data)
-      // Actualizamos el item específico en la lista local
       setState(prev => ({
         ...prev,
-        items: prev.items.map(item => item.id === updated.id ? updated : item)
+        items: prev.items.map(item =>
+          item.id === updated.id ? { ...updated, mainImage: item.mainImage } : item
+        ),
       }))
       return updated
     } catch (error) {
@@ -66,10 +76,9 @@ export function useRooms() {
   const deleteRoom = useCallback(async (id: number) => {
     try {
       await roomService.delete(id)
-      // Filtramos el item eliminado de la lista local
       setState(prev => ({
         ...prev,
-        items: prev.items.filter(item => item.id !== id)
+        items: prev.items.filter(item => item.id !== id),
       }))
     } catch (error) {
       throw error
