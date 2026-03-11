@@ -10,6 +10,7 @@ import ErrorDisplay from "./ErrorDisplay"
 import { useAuth } from "@/context/AuthContext"
 import { fetchRooms } from "@/lib/fetcher"
 import { getStatusConfig } from "@/lib/utils/roomUtils"
+import { imageService } from "@/lib/services/imageService"
 
 type Room = {
   id: number
@@ -20,6 +21,7 @@ type Room = {
   pricePerNight: number
   description: string
   features: string[]
+  mainImage?: string // URL de la imagen principal (opcional)
 }
 
 type NotificationState = {
@@ -55,20 +57,53 @@ export default function RoomList() {
     try {
       setLoading(true)
       setError(null)
+
       const data = await fetchRooms()
-      setRooms(data)
+
+      // Para cada habitación, buscar su imagen principal
+      const roomsWithImages = await Promise.all(
+        data.map(async (room: Room) => {
+          try {
+            const images = await imageService.listByEntity("room", room.id)
+            const mainImage =
+              images.find((img) => img.is_main)?.url ?? images[0]?.url
+            return { ...room, mainImage }
+          } catch {
+            // Si falla la carga de imágenes, la habitación se muestra sin imagen
+            return room
+          }
+        })
+      )
+
+      setRooms(roomsWithImages)
     } catch (err) {
       console.error("Error fetching rooms:", err)
-      const errorMessage = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
+      const errorMessage =
+        err instanceof Error
+          ? err.message.toLowerCase()
+          : String(err).toLowerCase()
 
-      if (errorMessage.includes("cors") || errorMessage.includes("network") || errorMessage.includes("failed to fetch")) {
+      if (
+        errorMessage.includes("cors") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("failed to fetch")
+      ) {
         setError("No pudimos conectarnos al servidor.")
-      } else if (errorMessage.includes("500") || errorMessage.includes("internal server")) {
-        setError("Lo sentimos, el servicio no se encuentra disponible en este momento.")
+      } else if (
+        errorMessage.includes("500") ||
+        errorMessage.includes("internal server")
+      ) {
+        setError(
+          "Lo sentimos, el servicio no se encuentra disponible en este momento."
+        )
       } else if (errorMessage.includes("timeout")) {
-        setError("La solicitud ha tardado demasiado. Por favor, inténtalo nuevamente.")
+        setError(
+          "La solicitud ha tardado demasiado. Por favor, inténtalo nuevamente."
+        )
       } else {
-        setError("Lo sentimos, el servicio no se encuentra disponible en este momento.")
+        setError(
+          "Lo sentimos, el servicio no se encuentra disponible en este momento."
+        )
       }
     } finally {
       setLoading(false)
@@ -105,25 +140,24 @@ export default function RoomList() {
   }, [selectedRoom])
 
   const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({
-      show: true,
-      type,
-      message,
-    })
+    setNotification({ show: true, type, message })
   }
 
   const handleInputChange = (name: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
-    
+    setFormData((prev) => ({ ...prev, [name]: value }))
+
     if (fieldErrors[name]) {
-      setFieldErrors(prev => {
+      setFieldErrors((prev) => {
         const newErrors = { ...prev }
         delete newErrors[name]
         return newErrors
       })
     }
-    
-    if ((name === "checkInDate" || name === "checkOutDate") && generalError?.includes("fecha de Check-Out")) {
+
+    if (
+      (name === "checkInDate" || name === "checkOutDate") &&
+      generalError?.includes("fecha de Check-Out")
+    ) {
       setGeneralError(null)
     }
   }
@@ -143,9 +177,9 @@ export default function RoomList() {
     <div className="container mx-auto px-4 py-4 relative max-w-6xl">
       <Notification
         notification={notification}
-        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+        onClose={() => setNotification((prev) => ({ ...prev, show: false }))}
       />
-      
+
       <WelcomeBanner
         show={showMessageBanner}
         isLoggedIn={isLoggedIn}
