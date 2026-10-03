@@ -1,9 +1,11 @@
-import { apiFetch, toArray } from "@/lib/http"
+import { apiFetch, toArray, withNumbers } from "@/lib/http"
 import { imageService } from "./imageService"
 import type { Room, RoomPayload } from "@/lib/types/room"
 
+const normalize = (room: Room): Room => withNumbers(room, ["pricePerNight"])
+
 export const roomService = {
-  list: async (): Promise<Room[]> => toArray<Room>(await apiFetch("/rooms")),
+  list: async (): Promise<Room[]> => toArray<Room>(await apiFetch("/rooms")).map(normalize),
 
   // Habitaciones con su imagen principal; si falla la imagen, la habitación se muestra sin ella
   listWithMainImage: async (): Promise<Room[]> => {
@@ -19,13 +21,13 @@ export const roomService = {
     )
   },
 
-  getById: (id: number) => apiFetch<Room>(`/rooms/${id}`),
+  getById: async (id: number) => normalize(await apiFetch<Room>(`/rooms/${id}`)),
 
-  create: (data: RoomPayload) =>
-    apiFetch<Room>("/rooms", { method: "POST", body: JSON.stringify(data) }),
+  create: async (data: RoomPayload) =>
+    normalize(await apiFetch<Room>("/rooms", { method: "POST", body: JSON.stringify(data) })),
 
-  update: (id: number, data: RoomPayload) =>
-    apiFetch<Room>(`/rooms/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  update: async (id: number, data: RoomPayload) =>
+    normalize(await apiFetch<Room>(`/rooms/${id}`, { method: "PUT", body: JSON.stringify(data) })),
 
   delete: (id: number) => apiFetch<void>(`/rooms/${id}`, { method: "DELETE" }),
 }

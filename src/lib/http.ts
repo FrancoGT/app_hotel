@@ -72,3 +72,14 @@ export function toArray<T>(payload: unknown): T[] {
   }
   return []
 }
+
+// Los DECIMAL del backend llegan como string ("150.00"); convierte los campos indicados a number
+export function withNumbers<T extends object>(item: T, keys: readonly (keyof T)[]): T {
+  if (!item) return item
+  const out = { ...item }
+  for (const key of keys) {
+    const value = out[key]
+    if (typeof value === "string" && value.trim() !== "") out[key] = Number(value) as T[keyof T]
+  }
+  return out
+}
