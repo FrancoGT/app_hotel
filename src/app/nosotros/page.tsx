@@ -1,30 +1,39 @@
-"use client"
+import Image from "next/image"
+import Link from "next/link"
+import { BOOKING_PATH, HOTEL } from "@/config/hotel"
 
 export default function NosotrosPage() {
   return (
-    <div className="max-w-[1024px] mx-auto mt-8 mb-12">
-      <div className="card">
-        <h2 className="text-3xl font-serif text-center mb-6" style={{ color: "#9F836A" }}>
-          Nosotros
-        </h2>
-        <div className="space-y-4">
-          <p className="text-base" style={{ color: "var(--illary-text-light)" }}>
-            En <strong>Hotel Hillary</strong>, creemos que cada estadía debe ser una experiencia única, confortable y
-            memorable. Ubicados en el corazón de Arequipa, ofrecemos a nuestros huéspedes un ambiente acogedor, con un
-            servicio personalizado que refleja lo mejor de la hospitalidad peruana.
+    <div className="mx-auto max-w-4xl">
+      <div className="grid items-start gap-6 rounded-2xl border border-[var(--illary-line)] bg-white p-6 md:grid-cols-[1fr_260px] md:p-8">
+        <div>
+          <h1 className="font-serif text-3xl text-[var(--illary-ink)]">Nosotros</h1>
+          <p className="mt-4 text-lg leading-relaxed text-[var(--illary-text)]">
+            Hotel Illari es un hotel pequeño ubicado en la avenida Vidaurrazaga, en Arequipa. Contamos con{" "}
+            {HOTEL.totalRooms} habitaciones y ofrecemos atención directa para ayudarte a elegir tu alojamiento y
+            coordinar tu estancia. Consulta con nosotros las opciones disponibles para tus fechas de viaje.
           </p>
-          <p className="text-base" style={{ color: "var(--illary-text-light)" }}>
-            Nuestra misión es brindar una experiencia de alojamiento excepcional, combinando comodidad, modernidad y un
-            trato cálido que haga sentir a cada visitante como en casa. Ya sea que nos visites por negocios, turismo o
-            descanso, en Hotel Hillary encontrarás el equilibrio perfecto entre tranquilidad, conveniencia y atención de
-            calidad.
-          </p>
-          <p className="text-base" style={{ color: "var(--illary-text-light)" }}>
-            Contamos con habitaciones modernas, servicios adaptados a tus necesidades y un equipo comprometido con
-            superar tus expectativas. Además, nuestra ubicación estratégica te conecta con los principales atractivos
-            turísticos, centros comerciales y zonas empresariales de la ciudad.
-          </p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <Link href={BOOKING_PATH} className="btn-illary">
+              Consultar disponibilidad
+            </Link>
+            <a href={HOTEL.phoneHref} className="btn-illary-outline">
+              Llamar al {HOTEL.phoneDisplay}
+            </a>
+          </div>
         </div>
+
+        <figure className="mx-auto w-full max-w-[260px]">
+          <Image
+            src={HOTEL.facadePhoto.src}
+            alt={HOTEL.facadePhoto.alt}
+            width={HOTEL.facadePhoto.width}
+            height={HOTEL.facadePhoto.height}
+            sizes="260px"
+            className="h-auto w-full rounded-xl"
+          />
+          <figcaption className="mt-2 text-center text-sm text-[var(--illary-text)]">{HOTEL.address}</figcaption>
+        </figure>
       </div>
     </div>
   )

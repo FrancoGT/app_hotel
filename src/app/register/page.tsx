@@ -216,7 +216,7 @@ export default function RegisterPage() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-serif text-[#9F836A] mb-2">Crear cuenta</h2>
-          <p className="text-gray-600">Completa el formulario para registrarte en Hotel Hillary</p>
+          <p className="text-gray-600">Completa el formulario para registrarte en Hotel Illari</p>
         </div>
 
         <div className="card bg-white">

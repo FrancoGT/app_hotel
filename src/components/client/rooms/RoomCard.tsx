@@ -1,78 +1,55 @@
-import Image from "next/image"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { normalizeStatus, ROOM_STATUS } from "@/lib/constants/status"
-import type { Room } from "@/lib/types/room"
+import Link from "next/link"
+import { Users } from "lucide-react"
+import { BOOKING_PATH } from "@/config/hotel"
+import { formatCurrency } from "@/lib/utils/format"
+import { capacityLabel, publicDescription, publicFeatures, roomTitle, type CatalogRoom } from "@/lib/utils/roomContent"
+import { RoomPhoto } from "./RoomPhoto"
 
-interface RoomCardProps {
-  room: Room
-  // Solo los usuarios con sesión ven el botón de reservar
-  canReserve: boolean
-  onReserve: (room: Room) => void
-}
-
-export function RoomCard({ room, canReserve, onReserve }: RoomCardProps) {
-  const isAvailable = normalizeStatus(room.status) === "available"
+export function RoomCard({ room }: { room: CatalogRoom }) {
+  const title = roomTitle(room)
+  const description = publicDescription(room)
+  const features = publicFeatures(room)
 
   return (
-    <div className="card relative rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {room.mainImage ? (
-        <div className="relative h-48 w-full">
-          <Image
-            src={room.mainImage}
-            alt={`Habitación ${room.roomNumber}`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </div>
-      ) : (
-        <div className="h-48 w-full bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">Sin imagen disponible</span>
-        </div>
-      )}
+    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--illary-line)] bg-white shadow-sm">
+      <RoomPhoto src={room.mainImage} alt={`${title} del Hotel Illari`} />
 
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-3">
-          <h2 className="text-lg font-semibold text-gray-800">{room.roomNumber}</h2>
-          <StatusBadge
-            map={ROOM_STATUS}
-            status={room.status}
-            className="px-3 py-1 font-semibold uppercase tracking-wide"
-          />
-        </div>
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="text-xl font-serif font-semibold text-[var(--illary-ink)]">{title}</h3>
+        <p className="mb-3 text-sm text-[var(--illary-text)]">Habitación N.° {room.roomNumber}</p>
 
-        <p className="text-sm text-[var(--illary-text-light)] mb-3 leading-relaxed">{room.description}</p>
-
-        <div className="flex justify-between text-sm text-gray-600 mb-3">
-          <span>Piso {room.floor}</span>
-          <span>Máx. {room.maxOccupancy} personas</span>
-        </div>
-
-        <p className="text-2xl font-bold text-[var(--illary-primary)] mb-4">
-          S/ {room.pricePerNight}
-          <span className="ml-1 text-sm font-normal text-gray-500">/ noche</span>
+        <p className="mb-3 flex items-center gap-2 text-sm text-[var(--illary-ink)]">
+          <Users aria-hidden className="h-4 w-4 text-[var(--illary-primary)]" />
+          {capacityLabel(room.maxOccupancy)}
         </p>
 
-        <ul className="list-disc list-inside text-sm text-[var(--illary-text-light)] space-y-1 mb-4">
-          {room.features.map((feature, idx) => (
-            <li key={idx}>{feature}</li>
-          ))}
-        </ul>
+        {description && <p className="mb-3 text-sm leading-relaxed text-[var(--illary-text)]">{description}</p>}
 
-        {canReserve && (
-          <button
-            className={`w-full py-2.5 rounded-lg font-medium transition ${
-              isAvailable
-                ? "btn-illary hover:brightness-110 active:scale-[0.98]"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-            onClick={() => onReserve(room)}
-            disabled={!isAvailable}
-          >
-            {isAvailable ? "Reservar ahora" : "No disponible"}
-          </button>
+        {features.length > 0 && (
+          <ul className="mb-3 list-disc pl-5 text-sm text-[var(--illary-text)]">
+            {features.map((feature) => (
+              <li key={feature} className="mb-0.5">
+                {feature}
+              </li>
+            ))}
+          </ul>
         )}
+
+        <div className="mt-auto pt-2">
+          <p className="mb-4 text-2xl font-bold text-[var(--illary-primary)]">
+            {formatCurrency(room.pricePerNight)}
+            <span className="ml-1 text-sm font-normal text-[var(--illary-text)]">por noche</span>
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href={`/habitaciones/${room.id}`} className="btn-illary-outline">
+              Ver habitación
+            </Link>
+            <Link href={`${BOOKING_PATH}?habitacion=${room.id}`} className="btn-illary">
+              Solicitar reserva
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
   )
 }

@@ -181,6 +181,14 @@
   --text-muted: #6b7280;
 }
 
+/* === PALETA PÚBLICA HOTEL ILLARI (beige y marrón, contraste AA sobre blanco) === */
+:root {
+  --illary-ink: #3b3129;
+  --illary-text: #5c5148;
+  --illary-line: #e6dccf;
+  --illary-sand: #f5efe6;
+}
+
 /* === TOKENS DE INTERFAZ (paneles de gestión) === */
 :root {
   --ui-divider: #eceef1;
@@ -273,7 +281,9 @@
     color: var(--illary-primary-dark);
   }
 
-  a:focus-visible {
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
     outline: 2px solid var(--illary-primary);
     outline-offset: 2px;
     border-radius: 2px;
@@ -435,6 +445,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    min-height: 44px;
     text-decoration: none;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
@@ -444,9 +456,38 @@
     color: #ffffff;
   }
 
-  .btn-illary:focus-visible {
-    outline: 2px solid var(--illary-primary);
+  .btn-illary:focus-visible,
+  .btn-illary-outline:focus-visible {
+    outline: 2px solid var(--illary-ink);
     outline-offset: 2px;
+  }
+
+  .btn-illary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Variante secundaria del botón principal */
+  .btn-illary-outline {
+    background-color: transparent;
+    color: var(--illary-primary);
+    border: 2px solid var(--illary-primary);
+    border-radius: var(--ui-radius);
+    padding: 8px 18px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 44px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-illary-outline:hover {
+    background-color: var(--illary-primary);
+    color: #ffffff;
   }
 
   .btn-primary {

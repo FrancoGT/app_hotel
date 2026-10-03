@@ -94,7 +94,9 @@ export default function LoginPage() {
       const response = await authService.login(form)
       login(response.user, response.access_token)
 
-      router.push("/")
+      // Vuelve a la página de origen (p. ej. la solicitud de reserva); solo rutas internas
+      const next = new URLSearchParams(window.location.search).get("next")
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/")
     } catch (err: any) {
       const { generalError, fieldErrors: serverFieldErrors } = parseServerError(err)
       if (serverFieldErrors && Object.keys(serverFieldErrors).length > 0) {

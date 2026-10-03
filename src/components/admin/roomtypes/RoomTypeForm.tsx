@@ -88,7 +88,7 @@ export function RoomTypeForm({ initialData, onSubmit, onCancel, isSaving }: Room
           name="amenities"
           value={form.amenities}
           onChange={handleChange}
-          placeholder="Ej: Jacuzzi, Vista al Mar, King Size Bed"
+          placeholder="Ej: WiFi, TV, Escritorio"
           hint={<p className="text-[10px] text-gray-400 text-right">Escribe las características separadas por comas.</p>}
         />
         <SelectField label="Estado" name="status" value={form.status} onChange={handleChange} options={STATUS_OPTIONS} />
