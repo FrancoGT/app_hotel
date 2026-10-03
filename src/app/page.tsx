@@ -1,55 +1,33 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import RoomList from "@/components/common/RoomList"
-import { fetchMyRecommendations } from "@/lib/services/recommendationService"
-import { Recommendation } from "@/lib/types/recommendation"
+import { RoomList } from "@/components/client/rooms/RoomList"
+import { RecommendationBanner } from "@/components/client/RecommendationBanner"
+import { useAuth } from "@/context/AuthContext"
+import { recommendationService } from "@/lib/services/recommendationService"
+import type { Recommendation } from "@/lib/types/recommendation"
 
-export default function Page() {
+export default function HomePage() {
+  const { isLoggedIn } = useAuth()
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
 
+  // Las recomendaciones son personales: solo se piden con sesión iniciada
   useEffect(() => {
-    const loadRecommendations = async () => {
-      const token = localStorage.getItem("access_token")
-
-      if (!token) {
-        setRecommendations([])
-        return
-      }
-
-      try {
-        const data = await fetchMyRecommendations(token)
-        setRecommendations(data)
-      } catch (error) {
-        console.error("Error cargando recomendaciones:", error)
-        setRecommendations([])
-      }
+    if (!isLoggedIn) {
+      setRecommendations([])
+      return
     }
-
-    loadRecommendations()
-  }, [])
+    recommendationService.listMy().then(setRecommendations)
+  }, [isLoggedIn])
 
   return (
-    <main>
+    <>
       {recommendations.length > 0 && (
-        <section className="mx-auto mt-6 mb-6 max-w-6xl rounded-2xl border border-[#9F836A]/30 bg-[#9F836A]/10 p-5 shadow-sm">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#9F836A]">
-            Recomendación personalizada
-          </p>
-
-          <h2 className="mb-2 text-lg font-serif text-[#6F4E37]">
-            {recommendations[0].message}
-          </h2>
-
-          {recommendations[0].reason && (
-            <p className="text-sm text-gray-600">
-              {recommendations[0].reason}
-            </p>
-          )}
-        </section>
+        <div className="mx-auto mt-6 mb-6 max-w-6xl">
+          <RecommendationBanner recommendation={recommendations[0]} />
+        </div>
       )}
-
       <RoomList />
-    </main>
+    </>
   )
 }

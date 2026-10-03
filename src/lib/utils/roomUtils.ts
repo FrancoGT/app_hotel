@@ -1,25 +1,15 @@
-import { ROOM_STATUS_MAP } from "@/lib/constants/room"
+const DAY_MS = 1000 * 60 * 60 * 24
 
-export function getStatusConfig(status: string) {
-  const normalizedStatus = status.toLowerCase()
-  return ROOM_STATUS_MAP[normalizedStatus] || { 
-    label: status, 
-    className: "bg-gray-100 text-gray-700 border-gray-200" 
-  }
+// Noches entre dos fechas "YYYY-MM-DD" (0 si faltan o el rango es inválido).
+// Se parsea en UTC para que los cambios de horario no conviertan 1 día en 0.99.
+export function getNights(checkIn: string, checkOut: string): number {
+  if (!checkIn || !checkOut) return 0
+  const start = Date.parse(`${checkIn.split("T")[0]}T00:00:00Z`)
+  const end = Date.parse(`${checkOut.split("T")[0]}T00:00:00Z`)
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 0
+  return Math.round((end - start) / DAY_MS)
 }
 
-export function calculateTotalAmount(pricePerNight: number, checkIn: string, checkOut: string): number {
-  const checkInDate = new Date(checkIn)
-  const checkOutDate = new Date(checkOut)
-  const diffTime = checkOutDate.getTime() - checkInDate.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return pricePerNight * Math.max(diffDays, 1)
-}
-
-export function getTotalDays(checkIn: string, checkOut: string): number {
-  if (!checkIn || !checkOut) return 1
-  const checkInDate = new Date(checkIn)
-  const checkOutDate = new Date(checkOut)
-  const diffTime = checkOutDate.getTime() - checkInDate.getTime()
-  return Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1)
+export function calculateTotalAmount(pricePerNight: number, nights: number): number {
+  return Number((Number(pricePerNight) * nights).toFixed(2))
 }

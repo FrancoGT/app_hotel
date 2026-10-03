@@ -1,87 +1,31 @@
-import type { Room, RoomPayload } from "../types/room"
-// IMPORTAMOS LA URL DESDE TU ARCHIVO DE CONFIGURACIÓN
-import { API_BASE_URL } from "@/lib/api"
+import { apiFetch, toArray } from "@/lib/http"
+import { imageService } from "./imageService"
+import type { Room, RoomPayload } from "@/lib/types/room"
 
-// 2. Helpers de Autenticación
-async function getAuthToken() {
-  if (typeof window === "undefined") return null
-  return localStorage.getItem("access_token")
-}
-
-// 3. Función Fetch Genérica con Auth
-async function fetchWithAuth<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = await getAuthToken()
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {}),
-  }
-
-  // Aquí usamos la variable importada
-  const url = `${API_BASE_URL}${path}`
-
-  if (options.method !== "GET" && options.method !== undefined) {
-    console.log(`[roomService] ${options.method} request body:`, options.body)
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers,
-    cache: "no-store",
-  })
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "")
-    console.error("[roomService] error response:", res.status, text)
-    throw new Error(`${res.status} ${res.statusText} - ${text}`)
-  }
-
-  if (res.status === 204) {
-    return undefined as unknown as T
-  }
-
-  return res.json() as Promise<T>
-}
-
-// 4. El Servicio Exportado (Objeto principal)
 export const roomService = {
-  // GET: Obtener todas las habitaciones
-  list: async (): Promise<Room[]> => {
-    const payload = await fetchWithAuth<any>("/rooms")
-    
-    // Normalización de respuesta
-    if (Array.isArray(payload)) return payload
-    if (payload && Array.isArray(payload.data)) return payload.data
-    if (payload && Array.isArray(payload.items)) return payload.items
-    
-    console.warn("[roomService] La respuesta no es un array válido", payload)
-    return [] 
+  list: async (): Promise<Room[]> => toArray<Room>(await apiFetch("/rooms")),
+
+  // Habitaciones con su imagen principal; si falla la imagen, la habitación se muestra sin ella
+  listWithMainImage: async (): Promise<Room[]> => {
+    const rooms = await roomService.list()
+    return Promise.all(
+      rooms.map(async (room) => {
+        try {
+          return { ...room, mainImage: await imageService.getMainUrl("room", room.id) }
+        } catch {
+          return room
+        }
+      })
+    )
   },
 
-  getById: (id: number): Promise<Room> =>
-    fetchWithAuth<Room>(`/rooms/${id}`),
+  getById: (id: number) => apiFetch<Room>(`/rooms/${id}`),
 
-  create: (data: RoomPayload): Promise<Room> =>
-    fetchWithAuth<Room>("/rooms", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  create: (data: RoomPayload) =>
+    apiFetch<Room>("/rooms", { method: "POST", body: JSON.stringify(data) }),
 
-  update: (id: number, data: RoomPayload): Promise<Room> =>
-    fetchWithAuth<Room>(`/rooms/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+  update: (id: number, data: RoomPayload) =>
+    apiFetch<Room>(`/rooms/${id}`, { method: "PUT", body: JSON.stringify(data) }),
 
-  delete: (id: number): Promise<void> =>
-    fetchWithAuth<undefined>(`/rooms/${id}`, {
-      method: "DELETE",
-    }),
+  delete: (id: number) => apiFetch<void>(`/rooms/${id}`, { method: "DELETE" }),
 }
-
-// 5. EXPORTACIONES DE COMPATIBILIDAD
-export const fetchRooms = roomService.list;

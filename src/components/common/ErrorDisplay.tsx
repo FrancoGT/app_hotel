@@ -3,7 +3,7 @@ interface ErrorDisplayProps {
   onRetry: () => void
 }
 
-export default function ErrorDisplay({ error, onRetry }: ErrorDisplayProps) {
+export function ErrorDisplay({ error, onRetry }: ErrorDisplayProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-8 text-center">

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
-import { registerUser } from "@/lib/fetcher"
+import { userService } from "@/lib/services/userService"
 import { Button } from "@/components/ui/button"
 
 interface FormData {
@@ -160,7 +160,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      await registerUser({
+      await userService.register({
         first_name: form.first_name,
         last_name: form.last_name,
         id_document_type: form.id_document_type,

@@ -66,17 +66,7 @@ export interface Reservation extends ReservationBase {
 // ==========================================
 // Esta es la que recibes en "/reservations/all".
 // Extiende la reserva normal y agrega el objeto 'user'.
+// `user` falta en las reservas recién creadas/actualizadas hasta que se recarga la lista
 export interface ReservationAdmin extends Reservation {
-  user: UserInfo
-}
-
-// ==========================================
-// 6. Tu Helper de API Response
-// ==========================================
-export interface ApiResponse<T> {
-  data?: T
-  error?: {
-    message: string
-    details?: any
-  }
+  user?: UserInfo
 }

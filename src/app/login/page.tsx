@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { loginUser } from "@/lib/fetcher"
+import { authService } from "@/lib/services/auth"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/AuthContext"
 import { parseServerError } from "@/lib/error-parser"
@@ -91,20 +91,8 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
-      // loginUser (de lib/auth) devuelve: { access_token, token_type, user: CurrentUser }
-      const response = await loginUser(form)
-
-      // response.user es CurrentUser (id, login, displayName, admin, employee, status, roles)
-      login(
-        {
-          name: response.user.displayName || response.user.login || "Usuario",
-          email: response.user.login || form.login,
-          avatar: "/placeholder.svg?height=32&width=32",
-          admin: response.user.admin,       // 👈 importante para /admin
-          roles: response.user.roles,       // 👈 por si quieres usar roles también
-        },
-        response.access_token,
-      )
+      const response = await authService.login(form)
+      login(response.user, response.access_token)
 
       router.push("/")
     } catch (err: any) {
