@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Building2, Bed, CalendarCheck, type LucideIcon } from "lucide-react"
+import { Building2, Bed, CalendarCheck, KeyRound, ShieldCheck, Users, type LucideIcon } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 
 const SECTIONS: { href: string; title: string; description: string; icon: LucideIcon }[] = [
@@ -25,6 +25,25 @@ const SECTIONS: { href: string; title: string; description: string; icon: Lucide
     description:
       "Revisa todas las reservas, confirma disponibilidad, gestiona pagos y mantén actualizado el estado de cada reserva.",
     icon: CalendarCheck,
+  },
+  {
+    href: "/admin/users",
+    title: "Gestionar Usuarios",
+    description:
+      "Crea cuentas de clientes y personal, edita sus datos, activa o desactiva su acceso y asígnales roles.",
+    icon: Users,
+  },
+  {
+    href: "/admin/roles",
+    title: "Gestionar Roles",
+    description: "Agrupa permisos en roles, revisa qué usuarios tiene cada uno y define qué pueden hacer.",
+    icon: ShieldCheck,
+  },
+  {
+    href: "/admin/permissions",
+    title: "Gestionar Permisos",
+    description: "Define los permisos de cada módulo del sistema que luego se asignan a los roles.",
+    icon: KeyRound,
   },
 ]
 

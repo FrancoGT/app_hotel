@@ -47,3 +47,24 @@ export interface UserOption {
   login: string
   telephone?: string
 }
+
+// 4. Payload del admin para CREAR un usuario (POST /users/). La contraseña va en `pass`
+export interface UserAdminPayload {
+  first_name?: string | null
+  last_name?: string | null
+  id_document_type?: DocumentType | null
+  id_document_number?: string | null
+  telephone?: string | null
+  position?: string | null
+  username?: string | null
+  login: string
+  displayName: string
+  pass: string
+  admin: boolean
+  employee: boolean
+  status: "A" | "I"
+}
+
+// 5. Payload del admin para ACTUALIZAR (PUT /users/{id}); `pass` solo si se cambia.
+// El estado se cambia aparte con PATCH /users/{id}/status
+export type UserAdminUpdatePayload = Partial<Omit<UserAdminPayload, "status">>

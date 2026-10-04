@@ -30,7 +30,7 @@ interface AdminCrudLayoutProps {
   // Modal de crear/editar con el formulario
   modal: { isOpen: boolean; title: string; saving: boolean; onClose: () => void; content: ReactNode }
   toast: ToastState | null
-  deletion: { message: string | null; confirm: () => void; cancel: () => void }
+  deletion: { message: string | null; confirmLabel?: string; confirm: () => void; cancel: () => void }
 }
 
 const PRIMARY_BUTTON =
@@ -120,6 +120,7 @@ export function AdminCrudLayout(props: AdminCrudLayoutProps) {
       <Toast toast={props.toast} />
       <ConfirmDialog
         message={props.deletion.message}
+        confirmLabel={props.deletion.confirmLabel}
         onConfirm={props.deletion.confirm}
         onCancel={props.deletion.cancel}
       />

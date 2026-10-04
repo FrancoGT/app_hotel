@@ -50,8 +50,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     } catch {
       // cuerpo no JSON
     }
-    const message = typeof detail === "string" ? detail : text || `HTTP ${res.status}`
-    throw new ApiError(res.status, message, detail)
+    throw new ApiError(res.status, errorMessage(detail, text, res.status), detail)
   }
 
   if (res.status === 204) return undefined as T
@@ -60,6 +59,18 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   if (!contentType.includes("application/json")) return undefined as T
 
   return (await res.json()) as T
+}
+
+// Mensaje legible: el detail de texto, o los errores de validación 422 de FastAPI ("campo: motivo")
+function errorMessage(detail: unknown, text: string, status: number): string {
+  if (typeof detail === "string") return detail
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((d: { loc?: unknown[]; msg?: string }) => (d?.msg ? `${d.loc?.[d.loc.length - 1] ?? ""}: ${d.msg}` : null))
+      .filter(Boolean)
+    if (parts.length) return parts.join(" · ")
+  }
+  return text || `HTTP ${status}`
 }
 
 // Algunos endpoints devuelven el array directo y otros envuelto en { data } o { items }

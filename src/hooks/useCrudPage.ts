@@ -85,6 +85,7 @@ export function useCrudPage<T extends { id: number }, TCreate, TUpdate = TCreate
     toast,
     modal: { isOpen: isModalOpen, editing, saving, openCreate, openEdit, close: closeModal, submit },
     deletion: {
+      item: pendingDelete,
       message: pendingDelete ? messages.confirmDelete(pendingDelete) : null,
       request: setPendingDelete,
       confirm: confirmDelete,

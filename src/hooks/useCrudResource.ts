@@ -4,7 +4,8 @@ export interface CrudService<T, TCreate, TUpdate = TCreate> {
   list: () => Promise<T[]>
   create: (data: TCreate) => Promise<T>
   update: (id: number, data: TUpdate) => Promise<T>
-  delete: (id: number) => Promise<void>
+  // Opcional: hay recursos que no se eliminan (p. ej. usuarios, que solo se desactivan)
+  delete?: (id: number) => Promise<void>
 }
 
 interface Options<T> {
@@ -58,11 +59,17 @@ export function useCrudResource<T extends { id: number }, TCreate, TUpdate = TCr
 
   const remove = useCallback(
     async (id: number) => {
+      if (!service.delete) throw new Error("Este registro no se puede eliminar")
       await service.delete(id)
       setItems((prev) => prev.filter((item) => item.id !== id))
     },
     [service]
   )
 
-  return { items, loading, error, load, create, update, remove }
+  // Reemplaza un registro de la lista con la versión devuelta por el backend
+  const replace = useCallback((updated: T) => {
+    setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)))
+  }, [])
+
+  return { items, loading, error, load, create, update, remove, replace }
 }
