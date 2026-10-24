@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { authService } from "@/lib/services/auth"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [notice, setNotice] = useState("")
+  // Página a la que volver tras iniciar sesión (p. ej. la reserva en curso); solo rutas internas
+  const [next, setNext] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const target = params.get("next")
+    if (target && target.startsWith("/") && !target.startsWith("//")) setNext(target)
+    if (params.get("registered")) setNotice("Cuenta creada. Inicia sesión para continuar.")
+  }, [])
 
   // 1) Tipar el validador por clave conocida
   const validateField = (name: keyof FormData, value: string): string | undefined => {
@@ -94,9 +104,7 @@ export default function LoginPage() {
       const response = await authService.login(form)
       login(response.user, response.access_token)
 
-      // Vuelve a la página de origen (p. ej. la solicitud de reserva); solo rutas internas
-      const next = new URLSearchParams(window.location.search).get("next")
-      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/")
+      router.push(next ?? "/")
     } catch (err: any) {
       const { generalError, fieldErrors: serverFieldErrors } = parseServerError(err)
       if (serverFieldErrors && Object.keys(serverFieldErrors).length > 0) {
@@ -125,6 +133,11 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white p-8 border border-gray-200 rounded-xl shadow-lg">
+          {notice && !error && (
+            <div role="status" className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-emerald-700 text-sm font-medium">{notice}</p>
+            </div>
+          )}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm font-medium">{error}</p>
@@ -211,7 +224,7 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500">
             ¿No tienes una cuenta?{" "}
             <button
-              onClick={() => router.push("/register")}
+              onClick={() => router.push(next ? `/register?next=${encodeURIComponent(next)}` : "/register")}
               className="text-[#9F836A] hover:text-[#8A7158] font-medium transition-colors"
             >
               Regístrate aquí

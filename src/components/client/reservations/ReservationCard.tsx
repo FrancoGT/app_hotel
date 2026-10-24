@@ -51,20 +51,12 @@ export function ReservationCard({ reservation: r, roomLabel }: ReservationCardPr
         </div>
       </div>
 
-      {(r.specialRequests || r.aiNotes) && (
+      {/* aiNotes no se muestra al cliente: habla de categorías A–H del dataset de entrenamiento,
+          que no corresponden a los tipos de habitación del hotel y contradirían la habitación reservada */}
+      {r.specialRequests && (
         <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50/50 -mx-5 -mb-5 p-4 rounded-b-xl text-sm">
-          {r.specialRequests && (
-            <div className="mb-2">
-              <span className="font-semibold text-gray-700 text-xs uppercase">Solicitudes especiales:</span>
-              <p className="text-gray-600 italic">&quot;{r.specialRequests}&quot;</p>
-            </div>
-          )}
-          {r.aiNotes && (
-            <div>
-              <span className="font-semibold text-gray-700 text-xs uppercase">Notas del sistema:</span>
-              <p className="text-gray-500 text-xs">{r.aiNotes}</p>
-            </div>
-          )}
+          <span className="font-semibold text-gray-700 text-xs uppercase">Solicitudes especiales:</span>
+          <p className="text-gray-600 italic">&quot;{r.specialRequests}&quot;</p>
         </div>
       )}
     </li>

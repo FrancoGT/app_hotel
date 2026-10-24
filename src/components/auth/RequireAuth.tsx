@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 
 interface RequireAuthProps {
@@ -12,6 +13,7 @@ interface RequireAuthProps {
 
 export function RequireAuth({ requireAdmin = false, children }: RequireAuthProps) {
   const { isLoading, isLoggedIn, isAdmin } = useAuth()
+  const pathname = usePathname()
 
   if (isLoading) {
     return (
@@ -26,7 +28,7 @@ export function RequireAuth({ requireAdmin = false, children }: RequireAuthProps
       <GuardMessage>
         <p className="text-[var(--dark-color)] text-base">Necesitas iniciar sesión para acceder a esta sección.</p>
         <Link
-          href="/login"
+          href={`/login?next=${encodeURIComponent(pathname)}`}
           className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[var(--primary-color)] text-white text-sm font-medium hover:brightness-110 transition-all shadow-sm"
         >
           Ir a iniciar sesión

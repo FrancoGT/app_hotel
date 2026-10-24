@@ -18,6 +18,13 @@ export function roomTitle(room: CatalogRoom): string {
   return room.typeName?.trim() || "Habitación"
 }
 
+// Etiqueta de una habitación reservada, igual para el cliente y el admin. Sale de los datos reales
+// (número y tipo del sistema), nunca de los códigos A–H del modelo de IA, que no corresponden a estos tipos.
+export function reservedRoomLabel(room: CatalogRoom | undefined, roomId: number): string {
+  if (!room) return `Habitación no encontrada (ID ${roomId})`
+  return room.typeName?.trim() ? `N.° ${room.roomNumber} · ${room.typeName.trim()}` : `N.° ${room.roomNumber}`
+}
+
 export function publicDescription(room: Room): string | undefined {
   const text = room.description?.trim()
   return text && !UNVERIFIED_CLAIMS.test(text) ? text : undefined

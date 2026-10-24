@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { PAYMENT_STATUS, RESERVATION_STATUS } from "@/lib/constants/status"
 import type { ReservationAdmin } from "@/lib/types/reservation"
 
-const columns: Column<ReservationAdmin>[] = [
+const buildColumns = (roomLabel: (roomId: number) => string): Column<ReservationAdmin>[] => [
   { header: "Nº", cell: (r) => r.id, className: "font-mono text-xs" },
   {
     header: "Cliente",
@@ -21,7 +21,7 @@ const columns: Column<ReservationAdmin>[] = [
         <span className="font-medium text-[var(--dark-color)]">Usuario ID: {r.userId}</span>
       ),
   },
-  { header: "Habitación", cell: (r) => `Nº ${r.roomId}`, className: "text-[var(--dark-color)] font-medium" },
+  { header: "Habitación", cell: (r) => roomLabel(r.roomId), className: "text-[var(--dark-color)] font-medium" },
   {
     header: "Fechas",
     cell: (r) => (
@@ -39,10 +39,12 @@ const columns: Column<ReservationAdmin>[] = [
 
 interface ReservationsTableProps {
   items: ReservationAdmin[]
+  // Etiqueta visible de la habitación (número y tipo); la reserva solo trae roomId
+  roomLabel: (roomId: number) => string
   onEdit: (item: ReservationAdmin) => void
   onDelete: (item: ReservationAdmin) => void
 }
 
-export function ReservationsTable(props: ReservationsTableProps) {
-  return <DataTable {...props} columns={columns} entityLabel="reserva" />
+export function ReservationsTable({ roomLabel, ...props }: ReservationsTableProps) {
+  return <DataTable {...props} columns={buildColumns(roomLabel)} entityLabel="reserva" />
 }

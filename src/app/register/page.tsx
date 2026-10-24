@@ -28,6 +28,12 @@ interface FieldErrors {
   username?: string
 }
 
+// "&next=..." si se llegó desde una página que debe retomarse tras iniciar sesión; solo rutas internas
+function nextQuery(): string {
+  const next = new URLSearchParams(window.location.search).get("next")
+  return next && next.startsWith("/") && !next.startsWith("//") ? `&next=${encodeURIComponent(next)}` : ""
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState<FormData>({
@@ -78,7 +84,7 @@ export default function RegisterPage() {
 
       case "pass":
         if (!value) return "La contraseña es requerida"
-        if (value.length < 6) return "La contraseña debe tener al menos 6 caracteres"
+        if (value.length < 8) return "La contraseña debe tener al menos 8 caracteres"
         if (!/(?=.*[a-z])(?=.*[A-Z])/.test(value)) {
           return "La contraseña debe tener al menos una mayúscula y una minúscula"
         }
@@ -173,8 +179,8 @@ export default function RegisterPage() {
         displayName: `${form.first_name} ${form.last_name}`.trim(),
       })
 
-      // Éxito - redirigir al login
-      router.push("/login?message=Registro exitoso. Puedes iniciar sesión ahora.")
+      // Éxito - redirigir al login, conservando la página de origen (p. ej. la reserva en curso)
+      router.push(`/login?registered=1${nextQuery()}`)
     } catch (err: any) {
       // Manejar errores específicos del servidor
       let errorMessage = "Error inesperado al registrar usuario"
@@ -395,7 +401,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={getFieldClassName("pass")}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 8 caracteres"
                   />
                   {fieldErrors.pass && (
                     <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
@@ -431,7 +437,7 @@ export default function RegisterPage() {
               </Button>
               <Button
                 type="button"
-                onClick={() => router.push("/login")}
+                onClick={() => router.push(`/login?${nextQuery().slice(1)}`)}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 font-medium text-lg rounded-lg transition-colors"
               >
                 Ya tengo cuenta

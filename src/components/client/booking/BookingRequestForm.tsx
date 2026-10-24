@@ -3,12 +3,13 @@
 import type React from "react"
 import { cloneElement, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { CheckCircle2, Info, Phone } from "lucide-react"
+import { CheckCircle2, Info, Phone, UserRound } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useRoomCatalog } from "@/hooks/useRoomCatalog"
 import { BOOKING_PATH, HOTEL } from "@/config/hotel"
-import { RESERVATION_STATUS, getStatusConfig, normalizeStatus } from "@/lib/constants/status"
+import { PAYMENT_STATUS, RESERVATION_STATUS, getStatusConfig } from "@/lib/constants/status"
 import { parseServerError } from "@/lib/error-parser"
+import { ApiError } from "@/lib/http"
 import { reservationService } from "@/lib/services/reservationService"
 import type { Reservation } from "@/lib/types/reservation"
 import { formatCurrency, formatDate } from "@/lib/utils/format"
@@ -16,7 +17,10 @@ import { calculateTotalAmount, getNights } from "@/lib/utils/roomUtils"
 import { capacityLabel, roomTitle, type CatalogRoom } from "@/lib/utils/roomContent"
 
 const DRAFT_KEY = "illari:booking-draft"
-const MANUAL_CONFIRMATION = "Tu solicitud quedará confirmada cuando el hotel verifique la disponibilidad."
+// POST /reservations/ exige token: un visitante sin cuenta no puede reservar en línea
+const LOGIN_REQUIRED = "Para reservar en línea necesitas iniciar sesión con tu cuenta."
+const PAYMENT_NOTE = "El pago se coordina con el hotel; la reserva queda con el pago pendiente hasta entonces."
+const AUTH_NEXT = encodeURIComponent(BOOKING_PATH)
 
 const EMPTY_FORM = {
   checkInDate: "",
@@ -24,8 +28,6 @@ const EMPTY_FORM = {
   adults: "1",
   children: "0",
   roomId: "",
-  name: "",
-  contact: "",
   comment: "",
 }
 
@@ -55,7 +57,7 @@ function writeDraft(form: BookingForm | null) {
   }
 }
 
-function validate(form: BookingForm, room: CatalogRoom | undefined, requireRoom: boolean): Errors {
+function validate(form: BookingForm, room: CatalogRoom | undefined): Errors {
   const errors: Errors = {}
   const today = localToday()
 
@@ -73,29 +75,22 @@ function validate(form: BookingForm, room: CatalogRoom | undefined, requireRoom:
   else if (room && !errors.adults && adults + children > room.maxOccupancy)
     errors.adults = `Esta habitación admite ${capacityLabel(room.maxOccupancy).toLowerCase()}.`
 
-  if (requireRoom && !form.roomId) errors.roomId = "Elige una habitación para enviar la solicitud en línea."
-
-  if (form.name.trim().length < 2) errors.name = "Escribe tu nombre."
-
-  const contact = form.contact.trim()
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)
-  const isPhone = /^\+?[\d\s()-]{6,}$/.test(contact) && contact.replace(/\D/g, "").length >= 6
-  if (!contact) errors.contact = "Indica un teléfono o correo para contactarte."
-  else if (!isEmail && !isPhone) errors.contact = "Escribe un teléfono (solo números) o un correo válido."
+  // El backend reserva una habitación concreta: roomId es obligatorio
+  if (!form.roomId) errors.roomId = "Elige una habitación."
 
   if (form.comment.length > 500) errors.comment = "El comentario puede tener hasta 500 caracteres."
   return errors
 }
 
 export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }) {
-  const { isLoading: authLoading, isLoggedIn, user } = useAuth()
+  const { isLoading: authLoading, isLoggedIn, user, logout } = useAuth()
   const { rooms, loading: roomsLoading, error: roomsError } = useRoomCatalog()
   const [form, setForm] = useState<BookingForm>(EMPTY_FORM)
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  // "phone": el visitante sin cuenta completó el formulario, pero no hay dónde enviarlo en línea
-  const [stage, setStage] = useState<"form" | "phone" | "sent">("form")
+  // "auth": visitante sin cuenta (o con la sesión vencida); debe iniciar sesión o registrarse
+  const [stage, setStage] = useState<"form" | "auth" | "sent">("form")
   const [sentReservation, setSentReservation] = useState<Reservation | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const restored = useRef(false)
@@ -107,11 +102,6 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
     const draft = readDraft()
     setForm((prev) => ({ ...prev, ...draft, ...(initialRoomId ? { roomId: initialRoomId } : {}) }))
   }, [initialRoomId])
-
-  useEffect(() => {
-    if (authLoading || !user) return
-    setForm((prev) => ({ ...prev, name: prev.name || user.name, contact: prev.contact || user.email }))
-  }, [authLoading, user])
 
   useEffect(() => {
     if (restored.current && stage === "form") writeDraft(form)
@@ -137,7 +127,7 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const nextErrors = validate(form, room, isLoggedIn)
+    const nextErrors = validate(form, room)
     if (Object.keys(nextErrors).length > 0) {
       showErrors(nextErrors, "Revisa los campos marcados.")
       return
@@ -145,9 +135,9 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
     setErrors({})
     setFormError(null)
 
-    // Sin cuenta no existe un canal en línea que reciba la solicitud: se ofrece el teléfono
+    // El borrador queda en sessionStorage para retomarlo tras iniciar sesión o registrarse
     if (!isLoggedIn || !room) {
-      setStage("phone")
+      setStage("auth")
       return
     }
 
@@ -159,28 +149,35 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
         checkOutDate: form.checkOutDate,
         adults: Number(form.adults),
         children: Number(form.children),
+        // La API no calcula el total: lo envía el cliente
         totalAmount: calculateTotalAmount(room.pricePerNight, nights),
-        // El backend no tiene campos de nombre/contacto: viajan en las solicitudes especiales
-        specialRequests: [
-          `Nombre: ${form.name.trim()}`,
-          `Contacto: ${form.contact.trim()}`,
-          form.comment.trim() && `Comentario: ${form.comment.trim()}`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        aiNotes: "",
+        // Sin userId (la reserva queda a nombre del token) ni aiNotes (lo completa el modelo de IA)
+        specialRequests: form.comment.trim() || undefined,
       })
-      if (!reservation?.id) throw new Error("El servidor no devolvió la solicitud registrada.")
+      if (!reservation?.id) throw new Error("El servidor no devolvió la reserva registrada.")
       writeDraft(null)
       setSentReservation(reservation)
       setStage("sent")
     } catch (err) {
       console.error(err)
+      // El token dura 15 minutos: si venció, se pide iniciar sesión otra vez conservando el borrador
+      if (err instanceof ApiError && err.status === 401) {
+        await logout()
+        setStage("auth")
+        return
+      }
+      if (err instanceof ApiError && err.status === 409) {
+        showErrors(
+          { roomId: "Esta habitación ya está reservada en esas fechas." },
+          "La habitación no está disponible en las fechas elegidas. Prueba otras fechas u otra habitación."
+        )
+        return
+      }
       const parsed = parseServerError(err)
       showErrors(
         (parsed.fieldErrors ?? {}) as Errors,
         parsed.generalError ??
-          "No pudimos enviar tu solicitud. Inténtalo nuevamente o llámanos para consultar disponibilidad."
+          "No pudimos registrar tu reserva. Inténtalo nuevamente o llámanos para consultar disponibilidad."
       )
     } finally {
       setSubmitting(false)
@@ -188,16 +185,16 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
   }
 
   if (stage === "sent" && sentReservation) {
-    const confirmed = normalizeStatus(sentReservation.status) === "confirmed"
     return (
       <section aria-live="polite" className="rounded-2xl border border-[var(--illary-line)] bg-white p-6">
         <CheckCircle2 aria-hidden className="h-8 w-8 text-emerald-700" />
-        <h2 className="mt-2 font-serif text-2xl text-[var(--illary-ink)]">Solicitud enviada</h2>
+        <h2 className="mt-2 font-serif text-2xl text-[var(--illary-ink)]">Reserva registrada</h2>
         <p className="mt-2 text-[var(--illary-text)]">
-          Registramos tu solicitud N.° {sentReservation.id}. Estado:{" "}
-          <strong>{getStatusConfig(RESERVATION_STATUS, sentReservation.status).label}</strong>.
+          Registramos tu reserva N.° {sentReservation.id}. Estado:{" "}
+          <strong>{getStatusConfig(RESERVATION_STATUS, sentReservation.status).label}</strong> · Pago:{" "}
+          <strong>{getStatusConfig(PAYMENT_STATUS, sentReservation.paymentStatus).label}</strong>.
         </p>
-        {!confirmed && <p className="mt-2 font-medium text-[var(--illary-ink)]">{MANUAL_CONFIRMATION}</p>}
+        <p className="mt-2 font-medium text-[var(--illary-ink)]">{PAYMENT_NOTE}</p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <Link href="/mis-reservas" className="btn-illary">
             Ver mis reservas
@@ -210,36 +207,38 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
     )
   }
 
-  if (stage === "phone") {
+  if (stage === "auth") {
     return (
       <section aria-live="polite" className="rounded-2xl border border-[var(--illary-line)] bg-white p-6">
-        <h2 className="font-serif text-2xl text-[var(--illary-ink)]">Tu solicitud aún no se ha enviado</h2>
+        <UserRound aria-hidden className="h-8 w-8 text-[var(--illary-primary)]" />
+        <h2 className="mt-2 font-serif text-2xl text-[var(--illary-ink)]">Inicia sesión para reservar</h2>
         <p className="mt-2 text-[var(--illary-text)]">
-          Llama al hotel con estos datos para consultar la disponibilidad. {MANUAL_CONFIRMATION}
+          {LOGIN_REQUIRED} Si aún no tienes una cuenta, puedes crearla ahora. Conservaremos los datos que ingresaste.
         </p>
         <dl className="mt-4 grid gap-x-6 gap-y-2 rounded-xl bg-[var(--illary-sand)] p-4 text-[var(--illary-ink)] sm:grid-cols-2">
           <SummaryItem label="Llegada" value={formatDate(`${form.checkInDate}T12:00:00`)} />
           <SummaryItem label="Salida" value={formatDate(`${form.checkOutDate}T12:00:00`)} />
           <SummaryItem label="Huéspedes" value={`${form.adults} adulto(s), ${form.children} niño(s)`} />
-          <SummaryItem label="Habitación" value={room ? `${roomTitle(room)} (N.° ${room.roomNumber})` : "Sin preferencia"} />
+          {room && <SummaryItem label="Habitación" value={`${roomTitle(room)} (N.° ${room.roomNumber})`} />}
           {total !== null && <SummaryItem label="Total estimado" value={`${formatCurrency(total)} por ${nights} noche(s)`} />}
-          <SummaryItem label="Nombre" value={form.name} />
         </dl>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <a href={HOTEL.phoneHref} className="btn-illary gap-2">
-            <Phone aria-hidden className="h-5 w-5" />
-            Llamar al {HOTEL.phoneDisplay}
-          </a>
+          <Link href={`/login?next=${AUTH_NEXT}`} className="btn-illary">
+            Iniciar sesión
+          </Link>
+          <Link href={`/register?next=${AUTH_NEXT}`} className="btn-illary-outline">
+            Crear cuenta
+          </Link>
           <button type="button" onClick={() => setStage("form")} className="btn-illary-outline">
             Editar datos
           </button>
         </div>
         <p className="mt-4 text-sm text-[var(--illary-text)]">
-          ¿Tienes una cuenta?{" "}
-          <Link href={`/login?next=${encodeURIComponent(BOOKING_PATH)}`} className="font-semibold underline">
-            Inicia sesión
-          </Link>{" "}
-          para enviar esta solicitud en línea; conservaremos los datos que ingresaste.
+          ¿Prefieres no crear una cuenta? Llámanos al{" "}
+          <a href={HOTEL.phoneHref} className="font-semibold underline">
+            {HOTEL.phoneDisplay}
+          </a>{" "}
+          para reservar por teléfono.
         </p>
       </section>
     )
@@ -251,7 +250,23 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="rounded-2xl border border-[var(--illary-line)] bg-white p-5 md:p-6">
       <p className="mb-5 flex items-start gap-2 rounded-lg bg-[var(--illary-sand)] p-3 text-[var(--illary-ink)]">
         <Info aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-[var(--illary-primary)]" />
-        {MANUAL_CONFIRMATION}
+        {isLoggedIn ? (
+          <span>
+            Reservas como <strong>{user?.name}</strong>. {PAYMENT_NOTE}
+          </span>
+        ) : (
+          <span>
+            {LOGIN_REQUIRED}{" "}
+            <Link href={`/login?next=${AUTH_NEXT}`} className="font-semibold underline">
+              Inicia sesión
+            </Link>{" "}
+            o{" "}
+            <Link href={`/register?next=${AUTH_NEXT}`} className="font-semibold underline">
+              crea una cuenta
+            </Link>
+            ; conservaremos los datos que ingreses aquí.
+          </span>
+        )}
       </p>
 
       {formError && (
@@ -275,13 +290,13 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
           <input type="number" inputMode="numeric" min={0} value={form.children} onChange={handleChange} />
         </Field>
         <Field
-          label={isLoggedIn ? "Habitación" : "Habitación (opcional)"}
+          label="Habitación"
           name="roomId"
           error={errors.roomId ?? (roomsError ? "No pudimos cargar las habitaciones." : undefined)}
           className="sm:col-span-2"
         >
-          <select value={form.roomId} onChange={handleChange} disabled={roomsLoading}>
-            <option value="">{roomsLoading ? "Cargando habitaciones..." : "Sin preferencia"}</option>
+          <select value={form.roomId} onChange={handleChange} disabled={roomsLoading} required>
+            <option value="">{roomsLoading ? "Cargando habitaciones..." : "Elige una habitación"}</option>
             {rooms.map((r) => (
               <option key={r.id} value={r.id}>
                 {roomTitle(r)} · N.° {r.roomNumber} · {capacityLabel(r.maxOccupancy)} · {formatCurrency(r.pricePerNight)} por noche
@@ -311,22 +326,16 @@ export function BookingRequestForm({ initialRoomId }: { initialRoomId?: string }
         </div>
       )}
 
-      <fieldset className="mt-6 grid gap-4 sm:grid-cols-2">
-        <legend className="mb-3 text-lg font-semibold text-[var(--illary-ink)]">Tus datos</legend>
-        <Field label="Nombre" name="name" error={errors.name}>
-          <input type="text" autoComplete="name" value={form.name} onChange={handleChange} required />
-        </Field>
-        <Field label="Teléfono o correo electrónico" name="contact" error={errors.contact}>
-          <input type="text" autoComplete="email" value={form.contact} onChange={handleChange} required />
-        </Field>
-        <Field label="Comentario (opcional)" name="comment" error={errors.comment} className="sm:col-span-2">
+      <fieldset className="mt-6 grid gap-4">
+        <legend className="mb-3 text-lg font-semibold text-[var(--illary-ink)]">Solicitudes especiales</legend>
+        <Field label="Comentario (opcional)" name="comment" error={errors.comment}>
           <textarea rows={3} maxLength={500} value={form.comment} onChange={handleChange} />
         </Field>
       </fieldset>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting || authLoading} className="btn-illary px-8 text-base">
-          {submitting ? "Enviando solicitud..." : isLoggedIn ? "Enviar solicitud" : "Continuar"}
+          {submitting ? "Registrando reserva..." : isLoggedIn ? "Reservar" : "Continuar"}
         </button>
         <a href={HOTEL.phoneHref} className="btn-illary-outline gap-2">
           <Phone aria-hidden className="h-5 w-5" />

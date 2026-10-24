@@ -6,21 +6,27 @@ import { Button } from "@/components/ui/button"
 import { ReservationCard } from "@/components/client/reservations/ReservationCard"
 import { reservationService } from "@/lib/services/reservationService"
 import { roomService } from "@/lib/services/roomService"
+import { roomTypeService } from "@/lib/services/roomTypeService"
 import type { Reservation } from "@/lib/types/reservation"
+import { reservedRoomLabel, withTypeNames, type CatalogRoom } from "@/lib/utils/roomContent"
 
 export default function MisReservasPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const [roomNumbers, setRoomNumbers] = useState<Record<number, string>>({})
+  const [rooms, setRooms] = useState<Map<number, CatalogRoom>>(new Map())
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [myReservations, rooms] = await Promise.all([reservationService.listMy(), roomService.list()])
+      const [myReservations, roomList, roomTypes] = await Promise.all([
+        reservationService.listMy(),
+        roomService.list(),
+        roomTypeService.list().catch(() => []),
+      ])
       setReservations(myReservations)
-      setRoomNumbers(Object.fromEntries(rooms.map((r) => [r.id, r.roomNumber])))
+      setRooms(new Map(withTypeNames(roomList, roomTypes).map((r) => [r.id, r])))
     } catch (e) {
       setError(e instanceof Error && e.message ? e.message : "No se pudieron cargar tus reservas.")
     } finally {
@@ -56,7 +62,7 @@ export default function MisReservasPage() {
       ) : (
         <ul className="grid gap-4">
           {reservations.map((r) => (
-            <ReservationCard key={r.id} reservation={r} roomLabel={roomNumbers[r.roomId] ?? `#${r.roomId}`} />
+            <ReservationCard key={r.id} reservation={r} roomLabel={reservedRoomLabel(rooms.get(r.roomId), r.roomId)} />
           ))}
         </ul>
       )}

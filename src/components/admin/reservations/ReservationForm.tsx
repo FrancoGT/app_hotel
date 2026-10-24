@@ -83,7 +83,8 @@ export function ReservationForm({ initialData, onSubmit, onCancel, isSaving }: R
       children: Number.parseInt(form.children),
       totalAmount,
       specialRequests: form.specialRequests,
-      aiNotes: form.aiNotes,
+      // Vacío no se envía: al crear, el backend completa aiNotes con la recomendación de la IA
+      aiNotes: form.aiNotes || undefined,
     }
 
     if (isEditing) {
@@ -212,6 +213,17 @@ export function ReservationForm({ initialData, onSubmit, onCancel, isSaving }: R
         value={form.specialRequests}
         onChange={handleChange}
       />
+
+      {isEditing && form.aiNotes && (
+        <div className="rounded-xl border border-[var(--border-color)] p-3 text-sm">
+          <p className="text-xs font-semibold uppercase text-[var(--color-400)]">Nota interna de la IA</p>
+          <p className="mt-1 text-[var(--dark-color)]">{form.aiNotes}</p>
+          <p className="mt-1 text-xs text-[var(--color-400)]">
+            Las categorías A–H vienen del dataset de entrenamiento y no equivalen a los tipos de habitación del
+            hotel. No se muestra al cliente.
+          </p>
+        </div>
+      )}
     </CrudForm>
   )
 }

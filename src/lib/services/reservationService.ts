@@ -9,9 +9,10 @@ import type {
 const normalize = <T extends Reservation>(r: T): T => withNumbers(r, ["totalAmount"])
 
 export const reservationService = {
-  // Admin: todas las reservas, con los datos del cliente
+  // Admin: todas las reservas, con los datos del cliente. El backend pagina con skip/limit
+  // (100 por defecto); el panel filtra y pagina en memoria
   listAll: async (): Promise<ReservationAdmin[]> =>
-    toArray<ReservationAdmin>(await apiFetch("/reservations/all")).map(normalize),
+    toArray<ReservationAdmin>(await apiFetch("/reservations/all?limit=1000")).map(normalize),
 
   // Cliente: solo las reservas del usuario autenticado
   listMy: async (): Promise<Reservation[]> =>
